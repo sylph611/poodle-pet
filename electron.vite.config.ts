@@ -8,7 +8,10 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
-    build: { outDir: "out/preload" }
+    build: {
+      outDir: "out/preload",
+      rollupOptions: { output: { format: "cjs", entryFileNames: "[name].js" } }
+    }
   },
   renderer: {
     root: "src/renderer",

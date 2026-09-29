@@ -18,11 +18,13 @@ import { registerQuickMemo } from "./shortcuts";
 
 const characterDir = join(__dirname, "../../characters/poodle");
 
-// Single instance lock
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
-  app.quit();
-  process.exit(0);
+// Single instance lock (skip in e2e test mode to allow restart within same userData)
+if (!process.env.E2E_TEST) {
+  const gotLock = app.requestSingleInstanceLock();
+  if (!gotLock) {
+    app.quit();
+    process.exit(0);
+  }
 }
 
 let currentPetWindow: BrowserWindow | null = null;
@@ -293,6 +295,8 @@ async function bootstrap() {
   app.on("before-quit", () => {
     clearInterval(loop);
     if (fullscreenInterval) clearInterval(fullscreenInterval);
+    // Force-destroy all windows so app.quit() isn't blocked by close event prevention
+    BrowserWindow.getAllWindows().forEach(w => w.destroy());
   });
 
   app.on("will-quit", () => {
