@@ -7,8 +7,26 @@ import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
 import { PetController } from "./pet-controller";
 import { WalkDriver, displayContainingElectron, groundY } from "./screen-utils";
+import { createTray } from "./tray";
 
 const characterDir = join(__dirname, "../../characters/poodle");
+
+// Single instance lock
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+  process.exit(0);
+}
+
+let currentPetWindow: BrowserWindow | null = null;
+
+app.on("second-instance", () => {
+  if (currentPetWindow) {
+    currentPetWindow.show();
+    currentPetWindow.webContents.send("pet:state", "happy");
+    setTimeout(() => currentPetWindow?.webContents.send("pet:state", "idle"), 1200);
+  }
+});
 
 async function bootstrap() {
   const manifest = loadManifest(characterDir);
@@ -22,6 +40,7 @@ async function bootstrap() {
   }));
 
   const win = createPetWindow(scale, manifest.frameSize);
+  currentPetWindow = win;
   if (process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(`${process.env.ELECTRON_RENDERER_URL}/pet/index.html`);
   } else {
@@ -78,6 +97,21 @@ async function bootstrap() {
       win.setBounds({ x: b.x, y, width: petSize, height: petSize });
     }
   }, 33); // ~30fps
+
+  // Create tray
+  createTray(win, () => clearInterval(loop), characterDir);
+
+  // Fullscreen auto-hide polling
+  if (DEFAULT_SETTINGS.hideOnFullscreen) {
+    setInterval(() => {
+      const primary = screen.getPrimaryDisplay();
+      const isFullscreen =
+        primary.bounds.height === primary.workAreaSize.height &&
+        primary.bounds.width === primary.workAreaSize.width;
+      if (isFullscreen && win.isVisible()) win.hide();
+      if (!isFullscreen && !win.isVisible()) win.show();
+    }, 5000);
+  }
 
   // drag state
   let dragAnchor: { winX: number; winY: number } | null = null;
