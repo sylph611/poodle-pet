@@ -1,4 +1,4 @@
-import { app, ipcMain, screen } from "electron";
+import { app, ipcMain, screen, BrowserWindow } from "electron";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createPetWindow } from "./pet-window";
@@ -102,8 +102,9 @@ async function bootstrap() {
   createTray(win, () => clearInterval(loop), characterDir);
 
   // Fullscreen auto-hide polling
+  let fullscreenInterval: NodeJS.Timeout | null = null;
   if (DEFAULT_SETTINGS.hideOnFullscreen) {
-    setInterval(() => {
+    fullscreenInterval = setInterval(() => {
       const primary = screen.getPrimaryDisplay();
       const isFullscreen =
         primary.bounds.height === primary.workAreaSize.height &&
@@ -154,7 +155,10 @@ async function bootstrap() {
 
   bubble.on("blur", () => bubble.hide());
 
-  app.on("before-quit", () => clearInterval(loop));
+  app.on("before-quit", () => {
+    clearInterval(loop);
+    if (fullscreenInterval) clearInterval(fullscreenInterval);
+  });
 }
 
 app.whenReady().then(bootstrap);
