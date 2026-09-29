@@ -1,13 +1,17 @@
 import { app, ipcMain, screen, BrowserWindow } from "electron";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { randomUUID } from "node:crypto";
 import { createPetWindow } from "./pet-window";
 import { createBubbleWindow, bubbleSize } from "./bubble-window";
+import { createMemoWindow } from "./memo-window";
 import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
+import type { Memo } from "../shared/types";
 import { PetController } from "./pet-controller";
 import { WalkDriver, displayContainingElectron, groundY } from "./screen-utils";
 import { createTray } from "./tray";
+import { Store, runDailyBackup } from "./store";
 
 const characterDir = join(__dirname, "../../characters/poodle");
 
@@ -28,10 +32,20 @@ app.on("second-instance", () => {
   }
 });
 
+function sortMemos(arr: Memo[]): Memo[] {
+  return [...arr].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return b.updatedAt.localeCompare(a.updatedAt);
+  });
+}
+
 async function bootstrap() {
   const manifest = loadManifest(characterDir);
   const scale = DEFAULT_SETTINGS.spriteScale;
   const petSize = manifest.frameSize * scale;
+
+  const memosStore = new Store<Memo[]>("memos.json", []);
+  runDailyBackup(["memos.json", "launchers.json", "settings.json"]);
 
   ipcMain.handle("sprite:get", () => ({
     manifestPath: pathToFileURL(join(characterDir, "manifest.json")).toString(),
@@ -53,6 +67,36 @@ async function bootstrap() {
   } else {
     bubble.loadFile(join(__dirname, "../renderer/bubble/index.html"));
   }
+
+  const memoWin = createMemoWindow();
+  if (process.env.ELECTRON_RENDERER_URL) {
+    memoWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/memo/index.html`);
+  } else {
+    memoWin.loadFile(join(__dirname, "../renderer/memo/index.html"));
+  }
+
+  ipcMain.handle("memos:list", () => sortMemos(memosStore.load()));
+  ipcMain.handle("memos:add", (_, payload: { text: string }) => {
+    const now = new Date().toISOString();
+    const m: Memo = { id: randomUUID(), text: payload.text, pinned: false, createdAt: now, updatedAt: now };
+    const arr = memosStore.load(); arr.push(m); memosStore.save(arr);
+    return m;
+  });
+  ipcMain.handle("memos:update", (_, id: string, patch: Partial<Pick<Memo, "text" | "pinned">>) => {
+    const arr = memosStore.load();
+    const idx = arr.findIndex(x => x.id === id);
+    if (idx < 0) throw new Error("not found");
+    arr[idx] = { ...arr[idx], ...patch, updatedAt: new Date().toISOString() };
+    memosStore.save(arr);
+    return arr[idx];
+  });
+  ipcMain.handle("memos:remove", (_, id: string) => {
+    memosStore.save(memosStore.load().filter(x => x.id !== id));
+  });
+  ipcMain.handle("memos:search", (_, q: string) => {
+    const needle = q.toLowerCase();
+    return sortMemos(memosStore.load().filter(m => m.text.toLowerCase().includes(needle)));
+  });
 
   const controller = new PetController();
   controller.onStateChange((s) => {
@@ -149,8 +193,9 @@ async function bootstrap() {
 
   ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
     bubble.hide();
+    if (a === "memo") { memoWin.show(); memoWin.focus(); }
+    if (a === "launcher") { /* Task 11 */ }
     if (a === "sleep") controller.forceState("sleep");
-    // memo / launcher: Task 9/11에서 확장
   });
 
   bubble.on("blur", () => bubble.hide());

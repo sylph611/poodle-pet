@@ -1,5 +1,12 @@
 <!doctype html>
 <html>
   <head><meta charset="utf-8"><link rel="stylesheet" href="./style.css"></head>
-  <body><div id="app">memo</div><script type="module" src="./main.ts"></script></body>
+  <body>
+    <div id="wrap">
+      <textarea id="input" placeholder="Enter로 저장 · Shift+Enter 줄바꿈"></textarea>
+      <input id="search" placeholder="검색" />
+      <ul id="list"></ul>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
 </html>
