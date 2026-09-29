@@ -228,6 +228,11 @@ async function bootstrap() {
     win.setBounds({ x: r.x, y: r.y, width: petSize, height: petSize });
   }
 
+  // Gravity for fall state (px/s²) — cartoony 낙하 속도
+  const GRAVITY = 1800;
+  let fallVy = 0;
+  let prevState: string = controller.state;
+
   let last = performance.now();
   const loop = setInterval(() => {
     if (!petWindowAlive()) return;
@@ -237,18 +242,33 @@ async function bootstrap() {
     controller.tick(now);
     const b = win.getBounds();
     const d = displayContainingElectron(screen, { x: b.x, y: b.y });
-    const y = groundY(d, petSize);
+    const groundYNow = groundY(d, petSize);
+
+    // fall 진입 감지 → 낙하 속도 리셋
+    if (controller.state === "fall" && prevState !== "fall") fallVy = 0;
+    prevState = controller.state;
 
     if (controller.state === "walk") {
       walker.tick(dt);
-      win.setBounds({ x: Math.round(walker.x), y, width: petSize, height: petSize });
+      win.setBounds({ x: Math.round(walker.x), y: groundYNow, width: petSize, height: petSize });
       win.webContents.send("pet:facing", walker.direction);
+    } else if (controller.state === "fall") {
+      // 중력 물리로 낙하. 착지하면 forceState("idle").
+      fallVy += GRAVITY * (dt / 1000);
+      const newY = b.y + fallVy * (dt / 1000);
+      if (newY >= groundYNow) {
+        win.setBounds({ x: b.x, y: groundYNow, width: petSize, height: petSize });
+        fallVy = 0;
+        controller.forceState("idle");
+      } else {
+        win.setBounds({ x: b.x, y: Math.round(newY), width: petSize, height: petSize });
+      }
     } else if (
       controller.state === "idle" ||
       controller.state === "sit" ||
       controller.state === "sleep"
     ) {
-      win.setBounds({ x: b.x, y, width: petSize, height: petSize });
+      win.setBounds({ x: b.x, y: groundYNow, width: petSize, height: petSize });
     }
   }, 33); // ~30fps
 

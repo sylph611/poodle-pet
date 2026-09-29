@@ -6,7 +6,9 @@ type Opts = {
 };
 
 const HAPPY_MS = 1200;
-const FALL_MS = 700;
+// FALL_MS는 물리 낙하가 끝나기 전에 강제 종료되지 않도록 넉넉히. 실제 착지는
+// main tick 루프가 중력 물리로 판단해 forceState("idle")로 조기 전환.
+const FALL_MS = 3000;
 const IDLE_MIN_WAIT_MS = 3000;
 const IDLE_MAX_WAIT_MS = 8000;
 const IDLE_TO_SLEEP_MS = 30_000;

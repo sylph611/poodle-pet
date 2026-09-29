@@ -50,13 +50,15 @@ describe("PetController — interactions", () => {
     expect(c.state).toBe("idle");
   });
 
-  it("dragStart -> drag; dragEnd -> fall -> idle after 700ms", () => {
+  it("dragStart -> drag; dragEnd -> fall -> idle after FALL_MS safety timeout", () => {
+    // 실제 착지는 main tick의 중력 물리가 forceState로 조기 종료.
+    // FALL_MS(3000ms)는 안전 상한 — 물리 안 돌 때 이 시간 지나면 강제 idle.
     const c = make();
     c.notify("dragStart");
     expect(c.state).toBe("drag");
     c.notify("dragEnd");
     expect(c.state).toBe("fall");
-    c.tick(700);
+    c.tick(3000);
     expect(c.state).toBe("idle");
   });
 
