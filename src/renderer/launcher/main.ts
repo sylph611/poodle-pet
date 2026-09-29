@@ -5,20 +5,38 @@ const list = document.getElementById("list") as HTMLUListElement;
 async function refresh() {
   const items = await window.launchers.list();
   list.innerHTML = "";
+  if (items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.innerHTML = `
+      아직 바로가기가 없어요
+      <div class="hint">푸들에게 파일을 끌어놓거나 위 버튼으로 추가하세요</div>
+    `;
+    list.appendChild(empty);
+    return;
+  }
   for (const l of items) {
     const li = document.createElement("li");
     li.draggable = true;
     li.dataset.id = l.id;
     const icon = l.type === "url" ? null : await window.launchers.iconFor(l.id);
+    const iconHtml = icon
+      ? `<img class="icon" src="${icon}"/>`
+      : `<span class="icon-fallback">${l.type === "url" ? "🌐" : l.type === "folder" ? "📁" : "📄"}</span>`;
     li.innerHTML = `
-      ${icon ? `<img class="icon" src="${icon}"/>` : `<span>${l.type === "url" ? "🌐" : "📄"}</span>`}
-      <span class="name"></span>
-      <button data-a="open">▶</button>
-      <button data-a="del">🗑</button>`;
-    (li.querySelector(".name") as HTMLElement).textContent = l.name;
+      <span class="drag-handle">⋮⋮</span>
+      ${iconHtml}
+      <span class="name" title=""></span>
+      <div class="actions">
+        <button data-a="open" title="열기">▶</button>
+        <button data-a="del" title="삭제">🗑</button>
+      </div>`;
+    const nameEl = li.querySelector(".name") as HTMLElement;
+    nameEl.textContent = l.name;
+    nameEl.title = l.target;
     li.querySelector('[data-a="open"]')!.addEventListener("click", async () => {
       const r = await window.launchers.open(l.id);
-      if (!r.ok) (li.querySelector(".name") as HTMLElement).classList.add("warn");
+      if (!r.ok) nameEl.classList.add("warn");
     });
     li.querySelector('[data-a="del"]')!.addEventListener("click", async () => {
       if (confirm("삭제할까요?")) { await window.launchers.remove(l.id); refresh(); }
@@ -27,7 +45,7 @@ async function refresh() {
     li.addEventListener("dragstart", () => li.classList.add("dragging"));
     li.addEventListener("dragend", async () => {
       li.classList.remove("dragging");
-      const ids = Array.from(list.children).map(x => (x as HTMLElement).dataset.id!);
+      const ids = Array.from(list.children).map(x => (x as HTMLElement).dataset.id ?? "").filter(Boolean);
       await window.launchers.reorder(ids);
     });
     list.appendChild(li);

@@ -1,10 +1,21 @@
 <!doctype html>
 <html>
-  <head><meta charset="utf-8"><link rel="stylesheet" href="./style.css"></head>
+  <head>
+    <meta charset="utf-8">
+    <title>메모 · Poodle Pet</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
   <body>
     <div id="wrap">
-      <textarea id="input" placeholder="Enter로 저장 · Shift+Enter 줄바꿈"></textarea>
-      <input id="search" placeholder="검색" />
+      <div class="header">
+        <span class="emoji">📝</span>
+        <span>메모</span>
+      </div>
+      <textarea id="input" placeholder="여기에 적고 Enter로 저장"></textarea>
+      <div class="hint">Enter — 저장 · Shift+Enter — 줄바꿈</div>
+      <div class="search-wrap">
+        <input id="search" placeholder="검색" />
+      </div>
       <ul id="list"></ul>
     </div>
     <script type="module" src="./main.ts"></script>

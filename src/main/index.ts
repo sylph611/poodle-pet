@@ -301,13 +301,35 @@ async function bootstrap() {
 
   // drag state
   let dragAnchor: { winX: number; winY: number } | null = null;
+  // bubble state — 재클릭 토글용 잠금 창 + 드래그 중 자동 hide 억제 플래그
+  let ignoreBubbleOpenUntil = 0;
+  let isDragging = false;
+  // blur가 즉시 hide하지 않고 100ms 유예 — 그 안에 dragStart 감지되면 hide 취소
+  let blurHideTimer: NodeJS.Timeout | null = null;
+
+  function positionBubbleAbovePet() {
+    if (!petWindowAlive() || bubble.isDestroyed()) return;
+    const b = win.getBounds();
+    bubble.setBounds({
+      x: b.x - Math.floor(bubbleSize.w / 2) + Math.floor(petSize / 2),
+      y: b.y - bubbleSize.h - 8,
+      width: bubbleSize.w,
+      height: bubbleSize.h
+    });
+  }
 
   ipcMain.on("pet:action", (_, kind: "click" | "dragStart" | "dragEnd") => {
     if (kind === "dragStart" && !dragAnchor) {
       const b = win.getBounds();
       dragAnchor = { winX: b.x, winY: b.y };
+      isDragging = true;
+      // 드래그 시작 감지 → 예약된 bubble hide 취소 (드래그 중 유지)
+      if (blurHideTimer) { clearTimeout(blurHideTimer); blurHideTimer = null; }
     }
-    if (kind === "dragEnd") dragAnchor = null;
+    if (kind === "dragEnd") {
+      dragAnchor = null;
+      isDragging = false;
+    }
     controller.notify(kind);
   });
 
@@ -320,16 +342,21 @@ async function bootstrap() {
       y: Math.max(newDisp.y, Math.min(newDisp.y + newDisp.height - petSize, newPos.y))
     };
     win.setBounds({ x: clamped.x, y: clamped.y, width: petSize, height: petSize });
+    // bubble이 열려있으면 pet 위치 따라 같이 이동
+    if (bubble.isVisible()) positionBubbleAbovePet();
   });
 
-  ipcMain.on("bubble:open", (_, anchor: { x: number; y: number }) => {
-    bubble.setBounds({
-      x: anchor.x - Math.floor(bubbleSize.w / 2) + Math.floor(petSize / 2),
-      y: anchor.y - bubbleSize.h - 8,
-      width: bubbleSize.w,
-      height: bubbleSize.h
-    });
-    bubble.showInactive();
+  ipcMain.on("bubble:open", (_, _anchor: { x: number; y: number }) => {
+    if (isShuttingDown) return;
+    // 재클릭 토글 잠금 (blur 직후 openBubble이 도착하면 무시)
+    if (Date.now() < ignoreBubbleOpenUntil) return;
+    // 이미 열려있으면 닫기 (토글)
+    if (bubble.isVisible()) {
+      bubble.hide();
+      return;
+    }
+    positionBubbleAbovePet();
+    bubble.show(); // focus를 잡아서 외부 클릭 시 blur → hide
   });
 
   ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
@@ -341,7 +368,17 @@ async function bootstrap() {
   });
 
   bubble.on("blur", () => {
-    if (!bubble.isDestroyed()) bubble.hide();
+    if (bubble.isDestroyed() || !bubble.isVisible()) return;
+    if (isDragging) return;
+    // 100ms 유예 — 그 안에 dragStart 도착하면 hide 취소되어 bubble이 드래그 따라옴
+    if (blurHideTimer) clearTimeout(blurHideTimer);
+    blurHideTimer = setTimeout(() => {
+      blurHideTimer = null;
+      if (bubble.isDestroyed() || !bubble.isVisible()) return;
+      bubble.hide();
+      // pet 재클릭이 blur → openBubble 순으로 도착하는 레이스 방지
+      ignoreBubbleOpenUntil = Date.now() + 200;
+    }, 100);
   });
 
   app.on("before-quit", () => {

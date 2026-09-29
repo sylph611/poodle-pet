@@ -1,7 +1,8 @@
 import { BrowserWindow } from "electron";
 import { join } from "node:path";
 
-const W = 180, H = 60;
+// bubble 창 크기 — 아래쪽 꼬리(::after 8px + margin)를 포함해야 잘리지 않음
+const W = 190, H = 72;
 
 export function createBubbleWindow(): BrowserWindow {
   const win = new BrowserWindow({

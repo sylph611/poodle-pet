@@ -1,8 +1,56 @@
-html, body { margin: 0; padding: 0; background: transparent; }
-.bubble {
-  display: flex; gap: 8px; padding: 8px 12px;
-  background: white; border: 2px solid #8b4513; border-radius: 16px;
-  font-size: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  user-select: none;
+  overflow: hidden;
 }
-button { background: none; border: none; cursor: pointer; font-size: 22px; }
-button:hover { background: #f5deb3; border-radius: 8px; }
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+.bubble {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  border: 2px solid #D4A574;
+  border-radius: 24px;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+  position: relative;
+}
+
+/* 아래쪽 꼬리 (푸들 향한) */
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: #FFFFFF;
+  border-right: 2px solid #D4A574;
+  border-bottom: 2px solid #D4A574;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 0 0 3px 0;
+}
+
+button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: background 0.12s, transform 0.12s;
+}
+button:hover {
+  background: #FFE8D6;
+  transform: scale(1.1);
+}
+button:active { transform: scale(0.95); }

@@ -6,15 +6,25 @@ async function refresh() {
   const q = search.value.trim();
   const items = q ? await window.memos.search(q) : await window.memos.list();
   list.innerHTML = "";
+  if (items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = q ? "검색 결과가 없어요" : "아직 메모가 없어요";
+    list.appendChild(empty);
+    return;
+  }
   for (const m of items) {
     const li = document.createElement("li");
     if (m.pinned) li.classList.add("pinned");
     li.innerHTML = `
       <span class="text"></span>
-      <button data-a="pin">${m.pinned ? "📌" : "📍"}</button>
-      <button data-a="copy">📋</button>
-      <button data-a="edit">✏️</button>
-      <button data-a="del">🗑</button>`;
+      <div class="actions">
+        <button data-a="pin" title="고정">${m.pinned ? "📌" : "📍"}</button>
+        <button data-a="copy" title="복사">📋</button>
+        <button data-a="edit" title="수정">✏️</button>
+        <button data-a="del" title="삭제">🗑</button>
+      </div>`;
+    if (m.pinned) li.querySelector('[data-a="pin"]')!.classList.add("pin-on");
     (li.querySelector(".text") as HTMLElement).textContent = m.text;
     li.querySelector('[data-a="pin"]')!.addEventListener("click", async () => {
       await window.memos.update(m.id, { pinned: !m.pinned }); refresh();
