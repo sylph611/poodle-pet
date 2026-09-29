@@ -2,7 +2,11 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { Memo, Launcher } from "../shared/types";
 
 const pet = {
-  getSprite: () => ipcRenderer.invoke("sprite:get") as Promise<{ manifestPath: string; imagePath: string; scale: number }>,
+  getSprite: () => ipcRenderer.invoke("sprite:get") as Promise<{
+    manifest: { frameSize: number; animations: Record<string, { row: number; frames: number; fps: number }> };
+    imageDataUrl: string;
+    scale: number;
+  }>,
   onState: (cb: (s: string) => void) => ipcRenderer.on("pet:state", (_, s) => cb(s)),
   onFacing: (cb: (d: number) => void) => ipcRenderer.on("pet:facing", (_, d) => cb(d)),
   onToast: (cb: (p: { text: string; ms: number }) => void) => ipcRenderer.on("pet:toast", (_, p) => cb(p)),

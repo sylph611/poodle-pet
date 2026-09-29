@@ -1,6 +1,6 @@
 import { app, ipcMain, screen, BrowserWindow, globalShortcut, dialog } from "electron";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createPetWindow } from "./pet-window";
 import { createBubbleWindow, bubbleSize } from "./bubble-window";
@@ -64,11 +64,15 @@ async function bootstrap() {
   const launchersStore = new Store<Launcher[]>("launchers.json", []);
   runDailyBackup(["memos.json", "launchers.json", "settings.json"]);
 
-  ipcMain.handle("sprite:get", () => ({
-    manifestPath: pathToFileURL(join(characterDir, "manifest.json")).toString(),
-    imagePath: pathToFileURL(join(characterDir, "sprite.png")).toString(),
-    scale
-  }));
+  ipcMain.handle("sprite:get", () => {
+    const manifestJson = JSON.parse(readFileSync(join(characterDir, "manifest.json"), "utf8"));
+    const imageBytes = readFileSync(join(characterDir, "sprite.png"));
+    return {
+      manifest: manifestJson,
+      imageDataUrl: `data:image/png;base64,${imageBytes.toString("base64")}`,
+      scale
+    };
+  });
 
   const win = createPetWindow(scale, manifest.frameSize);
   currentPetWindow = win;

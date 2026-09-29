@@ -4,10 +4,13 @@ type Manifest = {
 };
 
 async function main() {
-  const { manifestPath, imagePath, scale } = await window.pet.getSprite();
-  const manifest: Manifest = await (await fetch(manifestPath)).json();
-  const img = new Image(); img.src = imagePath;
-  await new Promise(r => (img.onload = r));
+  const { manifest, imageDataUrl, scale } = await window.pet.getSprite();
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = reject;
+    i.src = imageDataUrl;
+  });
 
   const size = manifest.frameSize * scale;
   const cvs = document.getElementById("pet") as HTMLCanvasElement;
