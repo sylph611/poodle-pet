@@ -12,6 +12,8 @@
 | 2026-09-30 | `b69cdfd` | 셧다운 중 destroyed 창 접근 크래시 방지 (isDestroyed guards) |
 | 2026-09-30 | `b0d5faf` | `file://` fetch 차단 우회 (sprite:get이 콘텐츠 직접 반환) |
 | 2026-09-30 | `8064d28` | 실 강아지 사진 기반 AI 스프라이트 + 프레임 자동 추출 + 중력 물리 |
+| 2026-09-30 | `9e108c7` | 블로그용 개발 저널 초안 |
+| 2026-09-30 | `21012c7` | 말풍선 UX (토글·외부 클릭 닫기·드래그 따라오기) + 메모/런처/말풍선 카라멜 톤 리디자인 |
 
 ---
 
@@ -415,6 +417,108 @@ PetController의 `FALL_MS`는 700 → 3000ms(안전 상한)로 상향. 물리가
 
 ---
 
+# Chapter 6. 말풍선 UX 튜닝 + UI 리디자인
+
+## 6.1 말풍선의 세 가지 조건
+
+유저 요청: "클릭했을때 아이콘창이 뜨는데 다른 빈곳 또는 다시 재클릭하면 없어져야 하고, 드래그할땐 따라오면 좋겠어."
+
+세 조건이 서로 살짝 충돌한다:
+- **재클릭 토글**: 두 번째 pet 클릭 시 hide
+- **외부 클릭 자동 닫힘**: 화면 어디를 클릭해도 hide
+- **드래그 시 따라오기**: 드래그 중에는 pet 옆에 유지
+
+외부 클릭 감지의 정석은 `bubble.show()`로 focus를 잡은 뒤 `blur` 이벤트로 hide. 하지만 pet 클릭도 focus를 뺏으니 blur가 걸림 — 그리고 드래그 시작 시 mousedown이 focus를 뺏어 bubble이 사라짐.
+
+## 6.2 해결 패턴
+
+**세 가지 트릭의 조합**:
+
+1. **`bubble.show()` + `blur` 자동 hide** (외부 클릭 처리)
+2. **`ignoreBubbleOpenUntil` 잠금 창** (재클릭 토글 레이스 방지)
+   - blur → hide 직후 `now + 200ms` 잠금 설정
+   - pet 재클릭이 blur → openBubble 순으로 오는데, openBubble이 잠금 창 안이면 무시
+3. **100ms 유예 hide** (드래그 시 따라오기)
+   - blur가 오면 즉시 hide하지 않고 100ms 뒤 예약
+   - 그 사이에 `pet:action("dragStart")` 도착하면 예약된 hide 취소
+
+```ts
+let ignoreBubbleOpenUntil = 0;
+let isDragging = false;
+let blurHideTimer: NodeJS.Timeout | null = null;
+
+ipcMain.on("bubble:open", (_, _anchor) => {
+  if (Date.now() < ignoreBubbleOpenUntil) return;
+  if (bubble.isVisible()) { bubble.hide(); return; }  // 토글
+  positionBubbleAbovePet();
+  bubble.show();  // focus 잡음
+});
+
+bubble.on("blur", () => {
+  if (isDragging) return;
+  if (blurHideTimer) clearTimeout(blurHideTimer);
+  blurHideTimer = setTimeout(() => {
+    blurHideTimer = null;
+    bubble.hide();
+    ignoreBubbleOpenUntil = Date.now() + 200;
+  }, 100);  // 유예
+});
+
+ipcMain.on("pet:action", (_, kind) => {
+  if (kind === "dragStart") {
+    isDragging = true;
+    if (blurHideTimer) { clearTimeout(blurHideTimer); blurHideTimer = null; }
+  }
+  // ...
+});
+
+ipcMain.on("pet:dragMove", (_, delta) => {
+  // ... pet 이동
+  if (bubble.isVisible()) positionBubbleAbovePet();  // 따라오기
+});
+```
+
+**교훈**: Focus 기반 UX(popover, dropdown)에서 "click outside to close" + "click again to toggle"는 흔한 레이스. 짧은 무시 창(ignore window)이 정답. 200ms면 충분.
+
+## 6.3 UI 리디자인 - 카라멜 톤 통일
+
+기본 HTML 스타일이 "구리다"는 유저 피드백. 캐릭터(갈색 푸들) 컬러와 톤을 맞춘 팔레트로 통일.
+
+**CSS 변수 팔레트** (memo·launcher·bubble 공통):
+```css
+:root {
+  --bg: #FFF8F0;          /* cream */
+  --surface: #FFFFFF;      /* card 배경 */
+  --primary: #8B4513;      /* chocolate */
+  --accent: #D4A574;       /* caramel */
+  --accent-soft: #FFE8D6;  /* soft peach hover */
+  --text: #3E2A1A;         /* dark brown */
+  --text-muted: #8B6F52;
+  --border: #EAD1B0;
+  --pinned-bg: #FFF3C4;
+  --pinned-border: #E8B923;
+  --shadow-sm: 0 1px 3px rgba(139, 69, 19, 0.08);
+  --shadow-md: 0 2px 8px rgba(139, 69, 19, 0.12);
+}
+```
+
+**공통 디자인 규칙**:
+- 카드형 리스트 아이템 (radius 10px, shadow-sm, hover 시 lift + shadow-md)
+- 버튼 hover: `--accent-soft` 배경 + `--primary` 텍스트
+- 스크롤바도 카라멜 색으로 (webkit-scrollbar)
+- Pretendard/system-ui 폰트 스택
+- 빈 상태 안내 문구 ("아직 메모가 없어요" / "푸들에게 파일을 끌어놓거나")
+- 마이크로 인터랙션: `transition: all 0.15s`
+
+**말풍선에는 꼬리 추가**: `::after`로 회전 사각형 → 창 크기 60→72px로 상향.
+
+## 블로그 소재 후보
+
+- **글감 12**: "Electron popover UX 3종세트 - focus + blur + ignore-window로 완벽 토글" (Ch 6.1~6.2)
+- **글감 13**: "5분 만에 앱을 귀엽게 만들기 - CSS 변수 팔레트 하나면 끝" (Ch 6.3)
+
+---
+
 # 부록 A. 재사용 가능한 프롬프트
 
 ## A.1 실 반려견 사진 → 픽셀아트 스프라이트
@@ -527,3 +631,5 @@ b0d5faf  sprite IPC 콘텐츠 반환 (file:// 우회)
 9. AI 출력 후처리 파이프라인 (Ch 4.3~4.4)
 10. 실 반려견 사진 → 픽셀아트 개성 (Ch 4)
 11. Electron 카툰 물리 (Ch 5.1)
+12. Popover 3종세트 (토글·외부 클릭·드래그 유지) (Ch 6.1~6.2)
+13. CSS 변수 팔레트로 앱 리디자인 (Ch 6.3)
