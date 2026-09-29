@@ -73,3 +73,13 @@ document.body.addEventListener("mouseup", (e) => {
   dragStartPt = null;
   dragged = false;
 });
+
+// Toast handler
+const toast = document.getElementById("toast")!;
+let toastTimer: number | null = null;
+window.pet.onToast(({ text, ms }) => {
+  toast.textContent = text;
+  toast.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toast.classList.remove("show"), ms);
+});

@@ -5,6 +5,7 @@ const pet = {
   getSprite: () => ipcRenderer.invoke("sprite:get") as Promise<{ manifestPath: string; imagePath: string; scale: number }>,
   onState: (cb: (s: string) => void) => ipcRenderer.on("pet:state", (_, s) => cb(s)),
   onFacing: (cb: (d: number) => void) => ipcRenderer.on("pet:facing", (_, d) => cb(d)),
+  onToast: (cb: (p: { text: string; ms: number }) => void) => ipcRenderer.on("pet:toast", (_, p) => cb(p)),
   action: (kind: "click" | "dragStart" | "dragEnd") => ipcRenderer.send("pet:action", kind),
   dragMove: (delta: { dx: number; dy: number }) => ipcRenderer.send("pet:dragMove", delta),
   openBubble: (anchor: { x: number; y: number }) => ipcRenderer.send("bubble:open", anchor),

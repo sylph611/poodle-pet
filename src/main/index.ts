@@ -1,4 +1,4 @@
-import { app, ipcMain, screen, BrowserWindow } from "electron";
+import { app, ipcMain, screen, BrowserWindow, globalShortcut } from "electron";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
@@ -11,7 +11,8 @@ import type { Memo } from "../shared/types";
 import { PetController } from "./pet-controller";
 import { WalkDriver, displayContainingElectron, groundY } from "./screen-utils";
 import { createTray } from "./tray";
-import { Store, runDailyBackup } from "./store";
+import { Store, runDailyBackup, settingsStore } from "./store";
+import { registerQuickMemo } from "./shortcuts";
 
 const characterDir = join(__dirname, "../../characters/poodle");
 
@@ -80,6 +81,8 @@ async function bootstrap() {
     const now = new Date().toISOString();
     const m: Memo = { id: randomUUID(), text: payload.text, pinned: false, createdAt: now, updatedAt: now };
     const arr = memosStore.load(); arr.push(m); memosStore.save(arr);
+    win.webContents.send("pet:toast", { text: "기억했어요!", ms: 1500 });
+    controller.notify("click"); // happy 반응
     return m;
   });
   ipcMain.handle("memos:update", (_, id: string, patch: Partial<Pick<Memo, "text" | "pinned">>) => {
@@ -143,7 +146,15 @@ async function bootstrap() {
   }, 33); // ~30fps
 
   // Create tray
-  createTray(win, () => clearInterval(loop), characterDir);
+  const tray = createTray(win, () => clearInterval(loop), characterDir);
+
+  // Register global shortcut for quick memo
+  const settings = settingsStore.load();
+  const res = registerQuickMemo(settings.shortcutQuickMemo, () => {
+    memoWin.show(); memoWin.focus();
+    win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
+  });
+  if (!res.ok) tray.displayBalloon?.({ title: "단축키 충돌", content: `${settings.shortcutQuickMemo}: ${res.error}` });
 
   // Fullscreen auto-hide polling
   let fullscreenInterval: NodeJS.Timeout | null = null;
@@ -203,6 +214,10 @@ async function bootstrap() {
   app.on("before-quit", () => {
     clearInterval(loop);
     if (fullscreenInterval) clearInterval(fullscreenInterval);
+  });
+
+  app.on("will-quit", () => {
+    globalShortcut.unregisterAll();
   });
 }
 

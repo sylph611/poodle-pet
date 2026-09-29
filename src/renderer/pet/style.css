@@ -1,2 +1,9 @@
 html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; -webkit-user-select: none; cursor: pointer; }
 canvas { image-rendering: pixelated; }
+#toast {
+  position: absolute; left: 50%; top: 4px; transform: translateX(-50%);
+  background: white; border: 2px solid #8b4513; border-radius: 12px;
+  padding: 4px 8px; font: 12px sans-serif; white-space: nowrap;
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+#toast.show { opacity: 1; }
