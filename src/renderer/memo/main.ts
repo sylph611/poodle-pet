@@ -45,3 +45,4 @@ input.addEventListener("keydown", async (e) => {
 });
 search.addEventListener("input", refresh);
 refresh();
+export {};

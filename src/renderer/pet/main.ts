@@ -83,3 +83,16 @@ window.pet.onToast(({ text, ms }) => {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => toast.classList.remove("show"), ms);
 });
+
+// File drag & drop — register dropped files as launchers
+document.body.addEventListener("dragover", (e) => { e.preventDefault(); });
+document.body.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const paths: string[] = [];
+  for (const f of Array.from(e.dataTransfer?.files ?? [])) {
+    // Electron exposes File.path on the File object in the renderer
+    const p = (f as any).path as string | undefined;
+    if (p) paths.push(p);
+  }
+  if (paths.length) window.pet.dropFiles(paths);
+});

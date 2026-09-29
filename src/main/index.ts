@@ -1,13 +1,15 @@
-import { app, ipcMain, screen, BrowserWindow, globalShortcut } from "electron";
+import { app, ipcMain, screen, BrowserWindow, globalShortcut, dialog } from "electron";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { createPetWindow } from "./pet-window";
 import { createBubbleWindow, bubbleSize } from "./bubble-window";
 import { createMemoWindow } from "./memo-window";
+import { createLauncherWindow } from "./launcher-window";
+import { classify, inferName, open as openLauncher, iconDataUrl } from "./launcher";
 import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
-import type { Memo } from "../shared/types";
+import type { Memo, Launcher } from "../shared/types";
 import { PetController } from "./pet-controller";
 import { WalkDriver, displayContainingElectron, groundY } from "./screen-utils";
 import { createTray } from "./tray";
@@ -46,6 +48,7 @@ async function bootstrap() {
   const petSize = manifest.frameSize * scale;
 
   const memosStore = new Store<Memo[]>("memos.json", []);
+  const launchersStore = new Store<Launcher[]>("launchers.json", []);
   runDailyBackup(["memos.json", "launchers.json", "settings.json"]);
 
   ipcMain.handle("sprite:get", () => ({
@@ -75,6 +78,72 @@ async function bootstrap() {
   } else {
     memoWin.loadFile(join(__dirname, "../renderer/memo/index.html"));
   }
+
+  const launcherWin = createLauncherWindow();
+  if (process.env.ELECTRON_RENDERER_URL) {
+    launcherWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/launcher/index.html`);
+  } else {
+    launcherWin.loadFile(join(__dirname, "../renderer/launcher/index.html"));
+  }
+
+  // Launchers helpers
+  function sortLaunchers(a: Launcher[]) { return [...a].sort((x, y) => x.order - y.order); }
+
+  ipcMain.handle("launchers:list", () => sortLaunchers(launchersStore.load()));
+
+  ipcMain.handle("launchers:add", (_, payload: { name?: string; type?: Launcher["type"]; target: string }) => {
+    const type = payload.type ?? classify(payload.target);
+    const name = payload.name ?? inferName(payload.target, type);
+    const arr = launchersStore.load();
+    const order = arr.length ? Math.max(...arr.map(x => x.order)) + 1 : 0;
+    const l: Launcher = { id: randomUUID(), name, type, target: payload.target, order };
+    arr.push(l); launchersStore.save(arr);
+    return l;
+  });
+
+  ipcMain.handle("launchers:remove", (_, id: string) => {
+    launchersStore.save(launchersStore.load().filter(x => x.id !== id));
+  });
+
+  ipcMain.handle("launchers:reorder", (_, ids: string[]) => {
+    const map = new Map(launchersStore.load().map(x => [x.id, x]));
+    const arr = ids.map((id, i) => ({ ...(map.get(id)!), order: i }));
+    launchersStore.save(arr);
+  });
+
+  ipcMain.handle("launchers:open", async (_, id: string) => {
+    const l = launchersStore.load().find(x => x.id === id);
+    if (!l) return { ok: false, error: "not found" };
+    const r = await openLauncher(l);
+    if (!r.ok) {
+      win.webContents.send("pet:toast", { text: "앗, 못 찾겠어요 🥺", ms: 2000 });
+    }
+    return r;
+  });
+
+  ipcMain.handle("launchers:iconFor", async (_, id: string) => {
+    const l = launchersStore.load().find(x => x.id === id);
+    if (!l) return null;
+    return iconDataUrl(l);
+  });
+
+  ipcMain.handle("launchers:pickFile", async () => {
+    const r = await dialog.showOpenDialog({ properties: ["openFile"] });
+    return r.canceled ? null : r.filePaths[0];
+  });
+
+  ipcMain.handle("pet:dropFiles", (_, paths: string[]) => {
+    const now = launchersStore.load();
+    let order = now.length ? Math.max(...now.map(x => x.order)) + 1 : 0;
+    const added: Launcher[] = [];
+    for (const p of paths) {
+      const type = classify(p);
+      added.push({ id: randomUUID(), name: inferName(p, type), type, target: p, order: order++ });
+    }
+    launchersStore.save([...now, ...added]);
+    win.webContents.send("pet:toast", { text: `바로가기 ${added.length}개 추가!`, ms: 1500 });
+    return added.length;
+  });
 
   ipcMain.handle("memos:list", () => sortMemos(memosStore.load()));
   ipcMain.handle("memos:add", (_, payload: { text: string }) => {
@@ -205,7 +274,7 @@ async function bootstrap() {
   ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
     bubble.hide();
     if (a === "memo") { memoWin.show(); memoWin.focus(); }
-    if (a === "launcher") { /* Task 11 */ }
+    if (a === "launcher") { launcherWin.show(); launcherWin.focus(); }
     if (a === "sleep") controller.forceState("sleep");
   });
 
