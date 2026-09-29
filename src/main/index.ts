@@ -28,13 +28,24 @@ if (!process.env.E2E_TEST) {
 }
 
 let currentPetWindow: BrowserWindow | null = null;
+let isShuttingDown = false;
+
+function petWindowAlive(): BrowserWindow | null {
+  if (isShuttingDown) return null;
+  const w = currentPetWindow;
+  if (!w || w.isDestroyed() || w.webContents.isDestroyed()) return null;
+  return w;
+}
 
 app.on("second-instance", () => {
-  if (currentPetWindow) {
-    currentPetWindow.show();
-    currentPetWindow.webContents.send("pet:state", "happy");
-    setTimeout(() => currentPetWindow?.webContents.send("pet:state", "idle"), 1200);
-  }
+  const w = petWindowAlive();
+  if (!w) return;
+  w.show();
+  w.webContents.send("pet:state", "happy");
+  setTimeout(() => {
+    const w2 = petWindowAlive();
+    if (w2) w2.webContents.send("pet:state", "idle");
+  }, 1200);
 });
 
 function sortMemos(arr: Memo[]): Memo[] {
@@ -120,7 +131,7 @@ async function bootstrap() {
     const l = launchersStore.load().find(x => x.id === id);
     if (!l) return { ok: false, error: "not found" };
     const r = await openLauncher(l);
-    if (!r.ok) {
+    if (!r.ok && petWindowAlive()) {
       win.webContents.send("pet:toast", { text: "앗, 못 찾겠어요 🥺", ms: 2000 });
     }
     return r;
@@ -146,7 +157,9 @@ async function bootstrap() {
       added.push({ id: randomUUID(), name: inferName(p, type), type, target: p, order: order++ });
     }
     launchersStore.save([...now, ...added]);
-    win.webContents.send("pet:toast", { text: `바로가기 ${added.length}개 추가!`, ms: 1500 });
+    if (petWindowAlive()) {
+      win.webContents.send("pet:toast", { text: `바로가기 ${added.length}개 추가!`, ms: 1500 });
+    }
     return added.length;
   });
 
@@ -155,8 +168,10 @@ async function bootstrap() {
     const now = new Date().toISOString();
     const m: Memo = { id: randomUUID(), text: payload.text, pinned: false, createdAt: now, updatedAt: now };
     const arr = memosStore.load(); arr.push(m); memosStore.save(arr);
-    win.webContents.send("pet:toast", { text: "기억했어요!", ms: 1500 });
-    controller.notify("click"); // happy 반응
+    if (petWindowAlive()) {
+      win.webContents.send("pet:toast", { text: "기억했어요!", ms: 1500 });
+      controller.notify("click"); // happy 반응
+    }
     return m;
   });
   ipcMain.handle("memos:update", (_, id: string, patch: Partial<Pick<Memo, "text" | "pinned">>) => {
@@ -177,6 +192,7 @@ async function bootstrap() {
 
   const controller = new PetController();
   controller.onStateChange((s) => {
+    if (!petWindowAlive()) return;
     win.webContents.send("pet:state", s);
     if (s === "idle") {
       const b = win.getBounds();
@@ -197,9 +213,11 @@ async function bootstrap() {
   });
 
   // Display recovery when monitor configuration changes
-  screen.on("display-metrics-changed", () => attemptRecover());
-  screen.on("display-removed", () => attemptRecover());
+  const onDisplayChange = () => attemptRecover();
+  screen.on("display-metrics-changed", onDisplayChange);
+  screen.on("display-removed", onDisplayChange);
   function attemptRecover() {
+    if (!petWindowAlive()) return;
     const b = win.getBounds();
     const displays = screen.getAllDisplays().map(d => d.workArea);
     const r = recoverPosition({ x: b.x, y: b.y }, { w: petSize, h: petSize }, displays);
@@ -208,6 +226,7 @@ async function bootstrap() {
 
   let last = performance.now();
   const loop = setInterval(() => {
+    if (!petWindowAlive()) return;
     const now = performance.now();
     const dt = now - last; last = now;
 
@@ -235,8 +254,10 @@ async function bootstrap() {
   // Register global shortcut for quick memo
   const settings = settingsStore.load();
   const res = registerQuickMemo(settings.shortcutQuickMemo, () => {
-    memoWin.show(); memoWin.focus();
-    win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
+    if (!memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
+    if (petWindowAlive()) {
+      win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
+    }
   });
   if (!res.ok) tray.displayBalloon?.({ title: "단축키 충돌", content: `${settings.shortcutQuickMemo}: ${res.error}` });
 
@@ -244,6 +265,7 @@ async function bootstrap() {
   let fullscreenInterval: NodeJS.Timeout | null = null;
   if (DEFAULT_SETTINGS.hideOnFullscreen) {
     fullscreenInterval = setInterval(() => {
+      if (!petWindowAlive()) return;
       const primary = screen.getPrimaryDisplay();
       const isFullscreen =
         primary.bounds.height === primary.workAreaSize.height &&
@@ -287,19 +309,26 @@ async function bootstrap() {
   });
 
   ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
-    bubble.hide();
-    if (a === "memo") { memoWin.show(); memoWin.focus(); }
-    if (a === "launcher") { launcherWin.show(); launcherWin.focus(); }
+    if (isShuttingDown) return;
+    if (!bubble.isDestroyed()) bubble.hide();
+    if (a === "memo" && !memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
+    if (a === "launcher" && !launcherWin.isDestroyed()) { launcherWin.show(); launcherWin.focus(); }
     if (a === "sleep") controller.forceState("sleep");
   });
 
-  bubble.on("blur", () => bubble.hide());
+  bubble.on("blur", () => {
+    if (!bubble.isDestroyed()) bubble.hide();
+  });
 
   app.on("before-quit", () => {
+    isShuttingDown = true;
     clearInterval(loop);
     if (fullscreenInterval) clearInterval(fullscreenInterval);
+    screen.removeListener("display-metrics-changed", onDisplayChange);
+    screen.removeListener("display-removed", onDisplayChange);
     // Force-destroy all windows so app.quit() isn't blocked by close event prevention
     BrowserWindow.getAllWindows().forEach(w => w.destroy());
+    currentPetWindow = null;
   });
 
   app.on("will-quit", () => {
