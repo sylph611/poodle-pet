@@ -1,6 +1,8 @@
 {
   "name": "poodle-pet",
   "version": "0.1.0",
+  "description": "Desktop pet with memos and shortcuts",
+  "author": "sylph",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",

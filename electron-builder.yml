@@ -9,7 +9,7 @@ files:
 win:
   target:
     - nsis
-  icon: characters/poodle/sprite.png
+  icon: characters/poodle/icon-256.png
 nsis:
   oneClick: false
   perMachine: false
