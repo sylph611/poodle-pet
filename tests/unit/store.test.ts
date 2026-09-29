@@ -35,6 +35,7 @@ describe("Store", () => {
     expect(s.load()).toEqual({ n: 1 });
     const brokenFiles = require("fs").readdirSync(tmp).filter((f: string) => f.startsWith("broken.broken-"));
     expect(brokenFiles).toHaveLength(1);
+    expect(brokenFiles[0]).toMatch(/^broken\.broken-\d{8}-\d{6}\.json$/);
   });
 
   it("keeps only 7 most recent backup dirs", () => {

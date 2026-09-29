@@ -13,7 +13,8 @@ export class Store<T> {
     try {
       return JSON.parse(readFileSync(p, "utf8")) as T;
     } catch {
-      const ts = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
+      const iso = new Date().toISOString().replace(/[-:T.Z]/g, "");
+      const ts = iso.slice(0, 8) + "-" + iso.slice(8, 14);
       const brokenName = `${this.name.replace(/\.json$/, "")}.broken-${ts}.json`;
       renameSync(p, filePath(brokenName));
       return structuredClone(this.defaults);
@@ -48,3 +49,10 @@ function pruneBackups(keep: number) {
   const excess = entries.slice(0, Math.max(0, entries.length - keep));
   for (const e of excess) rmSync(join(root, e), { recursive: true, force: true });
 }
+
+import type { Memo, Launcher, Settings } from "../shared/types";
+import { DEFAULT_SETTINGS } from "../shared/types";
+
+export const memosStore = new Store<Memo[]>("memos.json", []);
+export const launchersStore = new Store<Launcher[]>("launchers.json", []);
+export const settingsStore = new Store<Settings>("settings.json", DEFAULT_SETTINGS);
