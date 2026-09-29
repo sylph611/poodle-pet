@@ -39,3 +39,37 @@ async function main() {
   requestAnimationFrame(draw);
 }
 main();
+
+// Click / drag interaction
+let dragStartPt: { x: number; y: number } | null = null;
+let dragged = false;
+
+document.body.addEventListener("mousedown", (e) => {
+  dragStartPt = { x: e.screenX, y: e.screenY };
+  dragged = false;
+});
+
+document.body.addEventListener("mousemove", (e) => {
+  if (!dragStartPt) return;
+  const dx = e.screenX - dragStartPt.x;
+  const dy = e.screenY - dragStartPt.y;
+  if (!dragged && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+    dragged = true;
+    window.pet.action("dragStart");
+  }
+  if (dragged) {
+    window.pet.dragMove({ dx, dy });
+  }
+});
+
+document.body.addEventListener("mouseup", (e) => {
+  if (dragged) {
+    window.pet.action("dragEnd");
+  } else {
+    const anchor = { x: e.screenX - e.clientX, y: e.screenY - e.clientY };
+    window.pet.action("click");
+    window.pet.openBubble(anchor);
+  }
+  dragStartPt = null;
+  dragged = false;
+});

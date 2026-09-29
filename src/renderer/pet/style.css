@@ -1,2 +1,2 @@
-html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; -webkit-user-select: none; cursor: pointer; }
 canvas { image-rendering: pixelated; }

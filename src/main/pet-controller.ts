@@ -66,6 +66,8 @@ export class PetController {
     if (kind === "dragEnd") { this.enter("fall"); return; }
   }
 
+  forceState(s: PetState) { this.enter(s); }
+
   private rollIdleBranch() {
     const r = this.rng();
     if (r < 0.5) this.enter("walk");

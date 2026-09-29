@@ -1,1 +1,8 @@
-body { margin: 0; font-family: sans-serif; }
+html, body { margin: 0; padding: 0; background: transparent; }
+.bubble {
+  display: flex; gap: 8px; padding: 8px 12px;
+  background: white; border: 2px solid #8b4513; border-radius: 16px;
+  font-size: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+button { background: none; border: none; cursor: pointer; font-size: 22px; }
+button:hover { background: #f5deb3; border-radius: 8px; }
