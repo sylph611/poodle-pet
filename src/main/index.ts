@@ -109,7 +109,10 @@ async function bootstrap() {
 
   ipcMain.handle("launchers:reorder", (_, ids: string[]) => {
     const map = new Map(launchersStore.load().map(x => [x.id, x]));
-    const arr = ids.map((id, i) => ({ ...(map.get(id)!), order: i }));
+    const arr = ids.flatMap((id, i) => {
+      const entry = map.get(id);
+      return entry ? [{ ...entry, order: i }] : [];
+    });
     launchersStore.save(arr);
   });
 

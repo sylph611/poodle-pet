@@ -6,8 +6,12 @@ import type { Launcher } from "../shared/types";
 export async function iconDataUrl(l: Launcher): Promise<string | null> {
   if (l.type === "url") return null;
   if (!existsSync(l.target)) return null;
-  const icon = await app.getFileIcon(l.target, { size: "small" });
-  return icon.toDataURL();
+  try {
+    const icon = await app.getFileIcon(l.target, { size: "small" });
+    return icon.toDataURL();
+  } catch {
+    return null;
+  }
 }
 
 export function classify(target: string): Launcher["type"] {

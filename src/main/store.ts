@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, rmSync, cpSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { filePath, backupDir, userDataRoot } from "./paths";
+import { filePath, backupDir } from "./paths";
 
 export class Store<T> {
   constructor(private name: string, private defaults: T) {}
