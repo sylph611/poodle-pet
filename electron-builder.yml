@@ -1,0 +1,17 @@
+appId: com.sylph.poodle-pet
+productName: Poodle Pet
+directories:
+  output: dist
+files:
+  - "out/**/*"
+  - "characters/**/*"
+  - "package.json"
+win:
+  target:
+    - nsis
+  icon: characters/poodle/sprite.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Poodle Pet
