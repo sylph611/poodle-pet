@@ -36,6 +36,15 @@ export class WalkDriver {
   }
 }
 
+export function recoverPosition(pos: Point, size: { w: number; h: number }, displays: Rect[]): Point {
+  const insideAny = displays.some(d =>
+    pos.x + size.w > d.x && pos.x < d.x + d.width &&
+    pos.y + size.h > d.y && pos.y < d.y + d.height);
+  if (insideAny) return pos;
+  const primary = displays[0];
+  return { x: primary.x + Math.floor(primary.width / 2 - size.w / 2), y: groundY(primary, size.h) };
+}
+
 // Electron screen helper — not covered by unit tests
 export function displayContainingElectron(screen: import("electron").Screen, pos: Point): Rect {
   const d = screen.getDisplayNearestPoint(pos);

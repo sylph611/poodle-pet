@@ -11,7 +11,7 @@ import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
 import type { Memo, Launcher } from "../shared/types";
 import { PetController } from "./pet-controller";
-import { WalkDriver, displayContainingElectron, groundY } from "./screen-utils";
+import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
 import { Store, runDailyBackup, settingsStore } from "./store";
 import { registerQuickMemo } from "./shortcuts";
@@ -190,6 +190,16 @@ async function bootstrap() {
     minX: disp.x,
     maxX: disp.x + disp.width - petSize
   });
+
+  // Display recovery when monitor configuration changes
+  screen.on("display-metrics-changed", () => attemptRecover());
+  screen.on("display-removed", () => attemptRecover());
+  function attemptRecover() {
+    const b = win.getBounds();
+    const displays = screen.getAllDisplays().map(d => d.workArea);
+    const r = recoverPosition({ x: b.x, y: b.y }, { w: petSize, h: petSize }, displays);
+    win.setBounds({ x: r.x, y: r.y, width: petSize, height: petSize });
+  }
 
   let last = performance.now();
   const loop = setInterval(() => {
