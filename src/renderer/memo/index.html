@@ -18,6 +18,19 @@
       </div>
       <ul id="list"></ul>
     </div>
+
+    <div id="modal-backdrop" class="modal-backdrop" hidden>
+      <div class="modal">
+        <div class="modal-title" id="modal-title">메모 수정</div>
+        <textarea id="modal-input" rows="4"></textarea>
+        <div class="modal-hint">Ctrl+Enter — 저장 · Esc — 취소</div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="modal-cancel">취소</button>
+          <button class="modal-btn primary" id="modal-ok">저장</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

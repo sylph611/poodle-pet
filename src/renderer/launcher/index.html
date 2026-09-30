@@ -17,6 +17,19 @@
       </div>
       <ul id="list"></ul>
     </div>
+
+    <div id="modal-backdrop" class="modal-backdrop" hidden>
+      <div class="modal">
+        <div class="modal-title" id="modal-title">URL 추가</div>
+        <input id="modal-input" type="text" placeholder="https://" />
+        <div class="modal-hint" id="modal-hint">Enter — 저장 · Esc — 취소</div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="modal-cancel">취소</button>
+          <button class="modal-btn primary" id="modal-ok">추가</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

@@ -75,8 +75,42 @@ document.getElementById("add-file")!.addEventListener("click", async () => {
   if (p) { await window.launchers.add({ target: p }); refresh(); }
 });
 
+// window.prompt은 Electron에서 안 먹으므로 인라인 모달 사용
+function showModal(opts: { title: string; initial?: string; placeholder?: string }): Promise<string | null> {
+  const backdrop = document.getElementById("modal-backdrop")!;
+  const titleEl = document.getElementById("modal-title")!;
+  const input = document.getElementById("modal-input") as HTMLInputElement;
+  const ok = document.getElementById("modal-ok")!;
+  const cancel = document.getElementById("modal-cancel")!;
+
+  titleEl.textContent = opts.title;
+  input.value = opts.initial ?? "";
+  input.placeholder = opts.placeholder ?? "";
+  backdrop.hidden = false;
+  setTimeout(() => { input.focus(); input.select(); }, 0);
+
+  return new Promise((resolve) => {
+    const finish = (val: string | null) => {
+      backdrop.hidden = true;
+      ok.removeEventListener("click", onOk);
+      cancel.removeEventListener("click", onCancel);
+      input.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+    const onOk = () => finish(input.value.trim() || null);
+    const onCancel = () => finish(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") { e.preventDefault(); onOk(); }
+      if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+    };
+    ok.addEventListener("click", onOk);
+    cancel.addEventListener("click", onCancel);
+    input.addEventListener("keydown", onKey);
+  });
+}
+
 document.getElementById("add-url")!.addEventListener("click", async () => {
-  const u = prompt("URL", "https://");
+  const u = await showModal({ title: "URL 추가", initial: "https://", placeholder: "https://example.com" });
   if (u) { await window.launchers.add({ target: u, type: "url" }); refresh(); }
 });
 

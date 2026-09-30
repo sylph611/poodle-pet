@@ -173,6 +173,81 @@ html, body {
   font-weight: 600;
 }
 
+/* Modal (URL 추가) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(62, 42, 26, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+.modal-backdrop[hidden] { display: none; }
+.modal {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 16px 18px;
+  min-width: 260px;
+  max-width: 90%;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.modal-title {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+#modal-input {
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+#modal-input:focus { border-color: var(--primary); }
+.modal-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+.modal-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.modal-btn.cancel {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+.modal-btn.cancel:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.modal-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.modal-btn.primary:hover { background: var(--primary-hover); }
+
 .empty {
   text-align: center;
   color: var(--text-muted);
