@@ -4,6 +4,32 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-30
+
+배포 준비 라운드. 이름 변경 + 설정 창 + 사용성 개선.
+
+### Added
+- **이름 변경**: Poodle Pet → **뽁이 (BOKKI)**. 데이터 위치도 `%APPDATA%\BOKKI\`로 이동 (신규 설치)
+- **설정 창**: 스프라이트 크기 · 걷기 속도 · 빠른 메모 단축키 · 전체화면 자동 숨김 · Windows 시작 시 자동 실행
+- **단축키 실시간 변경**: 설정 창에서 새 조합 녹음. 이미 사용 중이면 자동 롤백
+- **첫 실행 안내 다이얼로그**: 트레이 위치 · 종료 방법 · 주요 단축키 안내
+- **트레이 "도움말" 메뉴**: 같은 안내를 언제든 다시 볼 수 있음
+- **메모·바로가기 Export/Import** (JSON): PC 이사할 때 데이터 옮기기
+- **데이터 폴더 열기** 버튼 (설정 창): `%APPDATA%\BOKKI\` 바로 열림
+- **LICENSE (MIT)** + CHANGELOG.md
+
+### Fixed
+- **다중 모니터 드래그**: `screen.getCursorScreenPoint()` 기반으로 재작성, 클램프 제거 → 여러 모니터로 자유롭게 이동
+- **드래그 시 강아지가 커서에서 도망가는 버그**: Pointer Events + `setPointerCapture` + `display.bounds` 클램프 완화
+- **말풍선 UX**: 재클릭 토글 · 외부 클릭 자동 닫힘 · 드래그 중 창 따라오기
+- **패키징**: `signAndEditExecutable:false`로 winCodeSign 다운로드 스킵 → NSIS 인스톨러 정상 생성
+
+### Changed
+- **UI 리디자인**: 메모·런처·말풍선·설정 카라멜/초콜릿 톤 통일. 카드형 리스트, hover lift
+- **CPU 최적화**: 상태별 adaptive tick (walk/fall/drag 33ms, idle 120ms, sleep 500ms)
+- **낙하 물리**: 잡았다 놓으면 중력으로 부드럽게 착지 (기존 순간이동 대신)
+- **애니메이션 fps 조정**: idle 3, walk 5, happy 6, drag 5 — AI 프레임 미세 어긋남 완화
+
 ## [0.1.0] — 2026-09-30
 
 첫 배포 가능한 빌드. Windows 데스크톱 갈색 푸들 펫 v1.
@@ -36,5 +62,6 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.2.0
 [0.1.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.1.0
