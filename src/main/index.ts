@@ -11,7 +11,7 @@ import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
 import type { Memo, Launcher } from "../shared/types";
 import { PetController } from "./pet-controller";
-import { WalkDriver, displayContainingElectron, displayBoundsContainingElectron, groundY, recoverPosition } from "./screen-utils";
+import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
 import { Store, runDailyBackup, settingsStore } from "./store";
 import { registerQuickMemo } from "./shortcuts";
@@ -299,8 +299,9 @@ async function bootstrap() {
     }, 5000);
   }
 
-  // drag state
-  let dragAnchor: { winX: number; winY: number } | null = null;
+  // drag state — 커서 대비 창 좌상단 오프셋을 저장. 매 tick 마다 OS 커서 위치로
+  // 창 위치 재계산 (renderer의 e.screenX보다 다중 모니터에서 신뢰성 높음).
+  let dragAnchor: { offsetX: number; offsetY: number } | null = null;
   // bubble state — 재클릭 토글용 잠금 창 + 드래그 중 자동 hide 억제 플래그
   let ignoreBubbleOpenUntil = 0;
   let isDragging = false;
@@ -321,9 +322,10 @@ async function bootstrap() {
   ipcMain.on("pet:action", (_, kind: "click" | "dragStart" | "dragEnd") => {
     if (kind === "dragStart" && !dragAnchor) {
       const b = win.getBounds();
-      dragAnchor = { winX: b.x, winY: b.y };
+      const cursor = screen.getCursorScreenPoint();
+      // 커서 - 창좌상단 = 오프셋. 이 값을 유지하며 커서를 따라가면 상대 위치 고정.
+      dragAnchor = { offsetX: cursor.x - b.x, offsetY: cursor.y - b.y };
       isDragging = true;
-      // 드래그 시작 감지 → 예약된 bubble hide 취소 (드래그 중 유지)
       if (blurHideTimer) { clearTimeout(blurHideTimer); blurHideTimer = null; }
     }
     if (kind === "dragEnd") {
@@ -333,18 +335,17 @@ async function bootstrap() {
     controller.notify(kind);
   });
 
-  ipcMain.on("pet:dragMove", (_, delta: { dx: number; dy: number }) => {
+  ipcMain.on("pet:dragMove", () => {
     if (!dragAnchor) return;
-    const newPos = { x: dragAnchor.winX + delta.dx, y: dragAnchor.winY + delta.dy };
-    // 드래그 중에는 workArea가 아닌 display.bounds(태스크바 포함 전체 화면)로 클램프.
-    // 커서가 태스크바 영역에 들어가도 강아지가 따라가서 이탈 방지. 놓으면 중력으로 groundY 착지.
-    const disp = displayBoundsContainingElectron(screen, newPos);
-    const clamped = {
-      x: Math.max(disp.x, Math.min(disp.x + disp.width - petSize, newPos.x)),
-      y: Math.max(disp.y, Math.min(disp.y + disp.height - petSize, newPos.y))
-    };
-    win.setBounds({ x: clamped.x, y: clamped.y, width: petSize, height: petSize });
-    // bubble이 열려있으면 pet 위치 따라 같이 이동
+    // OS 커서 위치는 항상 정확 (multi-monitor + DPI-per-monitor 안전).
+    // 클램프 없음 — 커서가 어느 모니터 위에 있으면 창도 같이 그리로 감.
+    const cursor = screen.getCursorScreenPoint();
+    win.setBounds({
+      x: cursor.x - dragAnchor.offsetX,
+      y: cursor.y - dragAnchor.offsetY,
+      width: petSize,
+      height: petSize
+    });
     if (bubble.isVisible()) positionBubbleAbovePet();
   });
 
