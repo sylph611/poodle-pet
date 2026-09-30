@@ -25,6 +25,7 @@
 | 2026-09-30 | `3f6e7bb` | 스프라이트 크기 hot-swap · 트레이 아이콘 crop · About 다이얼로그 (저자·GitHub 링크) |
 | 2026-09-30 | `0101bb3` | 트레이 아이콘 tight bbox crop → 48px · Buy me a coffee 링크 (About/Settings/README) |
 | 2026-09-30 | `1599568` | 도움말/About 커스텀 창(탭+카드) · 설정창 780px 확대 · tray-icon.png 커스텀 지원 |
+| 2026-09-30 | `864326a` | URL 추가·메모 수정 인라인 모달 (window.prompt Electron 미지원 fix) |
 
 ---
 
