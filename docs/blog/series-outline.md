@@ -2,6 +2,20 @@
 
 > 티스토리 "SI 개발자의 AI 에이전트 실전 노트" 연재 시작 시리즈.
 > 원본 자료: [dev-journal.md](./dev-journal.md).
+> 초고: `docs/blog/drafts/` (gitignored)
+
+## 확정 제목 (Tistory 제목 필드에 그대로 붙여넣기)
+
+| # | 티스토리 제목 | 파일 |
+|---|---|---|
+| 1 | 코드 한 줄 안 짜고 Windows 앱 배포까지 갔다 — Claude Code 실전기 [1/3] | `drafts/01-claude-code-desktop-app.html` |
+| 2 | 반려견 사진 한 장으로 픽셀아트 스프라이트를 만들었다 — Claude Code 실전기 [2/3] | `drafts/02-ai-sprite-pipeline.html` |
+| 3 | Electron 실전 삽질기 6선 — 크래시·드래그·자동업데이트까지 (Claude Code 실전기 [3/3]) | `drafts/03-electron-pitfalls.html` |
+
+**공통 태그** (14개, 세 편 모두):
+```
+Claude Code, AI 코딩, Electron, TypeScript, 데스크톱 앱, AI 에이전트, Superpowers, 서브에이전트, Playwright, 자동 업데이트, 개발기, 사이드프로젝트, 뽁이 개발기, BOKKI
+```
 
 ## 시리즈 관통 컨셉
 
