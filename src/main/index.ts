@@ -11,7 +11,7 @@ import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
 import type { Memo, Launcher } from "../shared/types";
 import { PetController } from "./pet-controller";
-import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
+import { WalkDriver, displayContainingElectron, displayBoundsContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
 import { Store, runDailyBackup, settingsStore } from "./store";
 import { registerQuickMemo } from "./shortcuts";
@@ -336,10 +336,12 @@ async function bootstrap() {
   ipcMain.on("pet:dragMove", (_, delta: { dx: number; dy: number }) => {
     if (!dragAnchor) return;
     const newPos = { x: dragAnchor.winX + delta.dx, y: dragAnchor.winY + delta.dy };
-    const newDisp = displayContainingElectron(screen, newPos);
+    // 드래그 중에는 workArea가 아닌 display.bounds(태스크바 포함 전체 화면)로 클램프.
+    // 커서가 태스크바 영역에 들어가도 강아지가 따라가서 이탈 방지. 놓으면 중력으로 groundY 착지.
+    const disp = displayBoundsContainingElectron(screen, newPos);
     const clamped = {
-      x: Math.max(newDisp.x, Math.min(newDisp.x + newDisp.width - petSize, newPos.x)),
-      y: Math.max(newDisp.y, Math.min(newDisp.y + newDisp.height - petSize, newPos.y))
+      x: Math.max(disp.x, Math.min(disp.x + disp.width - petSize, newPos.x)),
+      y: Math.max(disp.y, Math.min(disp.y + disp.height - petSize, newPos.y))
     };
     win.setBounds({ x: clamped.x, y: clamped.y, width: petSize, height: petSize });
     // bubble이 열려있으면 pet 위치 따라 같이 이동

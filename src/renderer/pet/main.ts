@@ -43,16 +43,21 @@ async function main() {
 }
 main();
 
-// Click / drag interaction
+// Click / drag interaction — Pointer Events + setPointerCapture 사용:
+// 드래그 중 창이 순간적으로 커서를 놓쳐도 pointermove/up 계속 수신되어 강아지 이탈 방지.
 let dragStartPt: { x: number; y: number } | null = null;
 let dragged = false;
+let activePointerId: number | null = null;
 
-document.body.addEventListener("mousedown", (e) => {
+document.body.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0) return; // 좌클릭만
+  try { document.body.setPointerCapture(e.pointerId); } catch {}
+  activePointerId = e.pointerId;
   dragStartPt = { x: e.screenX, y: e.screenY };
   dragged = false;
 });
 
-document.body.addEventListener("mousemove", (e) => {
+document.body.addEventListener("pointermove", (e) => {
   if (!dragStartPt) return;
   const dx = e.screenX - dragStartPt.x;
   const dy = e.screenY - dragStartPt.y;
@@ -65,7 +70,12 @@ document.body.addEventListener("mousemove", (e) => {
   }
 });
 
-document.body.addEventListener("mouseup", (e) => {
+function endDrag(e: PointerEvent) {
+  if (!dragStartPt) return;
+  if (activePointerId != null) {
+    try { document.body.releasePointerCapture(activePointerId); } catch {}
+    activePointerId = null;
+  }
   if (dragged) {
     window.pet.action("dragEnd");
   } else {
@@ -75,7 +85,9 @@ document.body.addEventListener("mouseup", (e) => {
   }
   dragStartPt = null;
   dragged = false;
-});
+}
+document.body.addEventListener("pointerup", endDrag);
+document.body.addEventListener("pointercancel", endDrag);
 
 // Toast handler
 const toast = document.getElementById("toast")!;

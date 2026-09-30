@@ -50,3 +50,9 @@ export function displayContainingElectron(screen: import("electron").Screen, pos
   const d = screen.getDisplayNearestPoint(pos);
   return { x: d.workArea.x, y: d.workArea.y, width: d.workArea.width, height: d.workArea.height };
 }
+
+// Full display bounds (workArea가 아닌 물리 화면 전체) — 드래그 중에는 태스크바 영역까지 이동 허용
+export function displayBoundsContainingElectron(screen: import("electron").Screen, pos: Point): Rect {
+  const d = screen.getDisplayNearestPoint(pos);
+  return { x: d.bounds.x, y: d.bounds.y, width: d.bounds.width, height: d.bounds.height };
+}
