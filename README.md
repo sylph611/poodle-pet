@@ -8,8 +8,8 @@ Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 
 </p>
 
 <p align="center">
-  <a href="https://github.com/sylph611/poodle-pet/releases"><img src="https://img.shields.io/github/v/release/sylph611/poodle-pet?color=8B4513&label=release" alt="release" /></a>
-  <a href="https://github.com/sylph611/poodle-pet/releases"><img src="https://img.shields.io/github/downloads/sylph611/poodle-pet/total?color=D4A574&label=downloads" alt="downloads" /></a>
+  <a href="https://github.com/sylph611/poodle-pet/releases"><img src="https://img.shields.io/github/v/release/sylph611/poodle-pet?display_name=tag&color=8B4513&label=release&cacheSeconds=300" alt="release" /></a>
+  <a href="https://github.com/sylph611/poodle-pet/releases"><img src="https://img.shields.io/github/downloads/sylph611/poodle-pet/total?color=D4A574&label=downloads&cacheSeconds=300" alt="downloads" /></a>
   <img src="https://img.shields.io/badge/platform-Windows-8B4513" alt="Windows" />
   <img src="https://img.shields.io/badge/license-MIT-D4A574" alt="MIT" />
   <a href="https://buymeacoffee.com/sylph611"><img src="https://img.shields.io/badge/☕-buy_me_a_coffee-FFDD00" alt="coffee" /></a>
