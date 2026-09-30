@@ -15,6 +15,8 @@
 | 2026-09-30 | `9e108c7` | 블로그용 개발 저널 초안 |
 | 2026-09-30 | `21012c7` | 말풍선 UX (토글·외부 클릭 닫기·드래그 따라오기) + 메모/런처/말풍선 카라멜 톤 리디자인 |
 | 2026-09-30 | `fa845e5` | main 머지, 태그 `v0.1.0`, win-unpacked 빌드 → 도그푸드 단계 시작 |
+| 2026-09-30 | `8132195` | `signAndEditExecutable:false` → NSIS 인스톨러(77MB) + zip(105MB) 배포 성공 |
+| 2026-09-30 | `6db8889` | 드래그 시 강아지 도망가는 버그 fix (pointer capture + display.bounds 클램프) |
 
 ---
 
@@ -520,6 +522,44 @@ ipcMain.on("pet:dragMove", (_, delta) => {
 
 ---
 
+# Chapter 7. 도그푸드에서 발견한 것
+
+## 7.1 드래그 시 강아지가 커서에서 도망가는 버그
+
+**증상**: 강아지를 잡아서 빠르게 이동시키면 강아지가 커서에서 이탈. 화면 하단으로 드래그 시 특히 심함.
+
+**원인 2가지 (서로 강화)**:
+
+1. **`mousemove`는 커서가 창 위에 있을 때만 발생**. 창이 순간적으로 커서를 놓치면 (마우스가 창보다 빨리 움직여서 잠깐 창 밖으로) `mousemove` 이벤트가 끊김 → 창은 마지막 setBounds 위치에 멈춤 → 사용자 계속 마우스 움직여도 강아지 반응 없음.
+2. **`workArea` 클램프**: 커서를 화면 하단 태스크바 영역으로 내리면 강아지는 태스크바 위(workArea 하단)에서 멈춤. 커서만 계속 아래로 → 커서 이탈 → 원인 1 트리거.
+
+두 원인이 **콤보**로 발생: 클램프로 강아지 멈춤 → 커서와 분리 → mousemove 끊김 → 강아지 절대 못 따라감.
+
+**Fix (`6db8889`)**:
+
+```ts
+// renderer: pointerdown 시 pointer capture. 커서가 창을 벗어나도 pointermove 계속 수신.
+document.body.addEventListener("pointerdown", (e) => {
+  document.body.setPointerCapture(e.pointerId);
+  dragStartPt = { x: e.screenX, y: e.screenY };
+});
+
+// main: 드래그 중에는 workArea가 아닌 display.bounds(전체 화면)로 클램프.
+// 태스크바 위로도 자유 이동. 놓으면 중력이 groundY로 착지시킴.
+const disp = displayBoundsContainingElectron(screen, newPos);
+```
+
+**교훈**:
+- 드래그 UI 표준 패턴은 **Pointer Events + setPointerCapture**. `mousedown`/`mousemove`/`mouseup`은 창 경계에서 이벤트 손실 위험.
+- 클램프 영역을 상황에 맞게 나눠야 함: **드래그 중 = 화면 전체(display.bounds)**, **정지/걷기 = 작업 영역(workArea)**.
+- 두 원인이 콤보로 발생하는 버그는 **한 개만 고치면 재현이 줄어들지만 사라지지 않음**. 같이 고쳐야 근본 해결.
+
+## 블로그 소재 후보
+
+- **글감 14**: "드래그 UI에서 커서 이탈 없이 창 따라오게 하는 두 가지 fix" (Ch 7.1)
+
+---
+
 # 부록 A. 재사용 가능한 프롬프트
 
 ## A.1 실 반려견 사진 → 픽셀아트 스프라이트
@@ -638,3 +678,4 @@ b0d5faf  sprite IPC 콘텐츠 반환 (file:// 우회)
 11. Electron 카툰 물리 (Ch 5.1)
 12. Popover 3종세트 (토글·외부 클릭·드래그 유지) (Ch 6.1~6.2)
 13. CSS 변수 팔레트로 앱 리디자인 (Ch 6.3)
+14. 드래그 중 커서 이탈 방지 (pointer capture + display.bounds) (Ch 7.1)
