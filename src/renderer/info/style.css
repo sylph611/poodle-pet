@@ -55,6 +55,16 @@ html, body {
   cursor: pointer;
   transition: all 0.15s;
   border-radius: 6px 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-icon {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
 }
 .tab:hover { background: var(--accent-soft); }
 .tab.active {

@@ -32,8 +32,10 @@ async function initAbout() {
     const dataUrl = cvs.toDataURL();
     const heroAbout = document.getElementById("hero-icon") as HTMLImageElement | null;
     const heroHelp = document.getElementById("hero-icon-help") as HTMLImageElement | null;
+    const tabAbout = document.getElementById("tab-icon-about") as HTMLImageElement | null;
     if (heroAbout) heroAbout.src = dataUrl;
     if (heroHelp) heroHelp.src = dataUrl;
+    if (tabAbout) tabAbout.src = dataUrl;
   } catch { /* 무시 — hero icon 없어도 OK */ }
 
   // 앱 버전 반영
