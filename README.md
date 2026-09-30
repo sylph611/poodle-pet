@@ -4,7 +4,7 @@ Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 
 메모와 바로가기 기능이 함께 딸려 있습니다.
 
 <p align="center">
-  <img src="docs/media/pet.png" width="128" alt="뽁이" />
+  <img src="docs/media/pet-walk.gif" width="600" alt="뽁이가 걷는 모습" />
 </p>
 
 <p align="center">

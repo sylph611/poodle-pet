@@ -21,6 +21,7 @@
     "gen:sprite": "node scripts/gen-placeholder-sprite.mjs",
     "gen:tray": "node scripts/gen-tray-icon.mjs",
     "gen:screenshots": "node scripts/capture-screenshots.mjs",
+    "gen:gif": "node scripts/gen-walk-gif.mjs",
     "pack": "electron-vite build && electron-builder --win"
   },
   "devDependencies": {
@@ -30,6 +31,7 @@
     "electron": "^32.0.0",
     "electron-builder": "^25.0.0",
     "electron-vite": "^2.3.0",
+    "gifenc": "^1.0.3",
     "pngjs": "^7.0.0",
     "typescript": "^5.5.0",
     "vite": "^5.4.0",
