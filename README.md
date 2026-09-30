@@ -3,19 +3,34 @@
 Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 펫.
 메모와 바로가기 기능이 함께 딸려 있습니다.
 
-<!-- TODO: 스크린샷/GIF 추가 -->
-<!--
-![뽁이 걷기](docs/media/bokki-walk.gif)
-![말풍선 메뉴](docs/media/bubble.png)
-![메모 창](docs/media/memo.png)
-![런처 창](docs/media/launcher.png)
-![설정 창](docs/media/settings.png)
--->
+<p align="center">
+  <img src="docs/media/pet.png" width="128" alt="뽁이" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/sylph611/poodle-pet/releases"><img src="https://img.shields.io/github/v/release/sylph611/poodle-pet?color=8B4513&label=release" alt="release" /></a>
+  <img src="https://img.shields.io/badge/platform-Windows-8B4513" alt="Windows" />
+  <img src="https://img.shields.io/badge/license-MIT-D4A574" alt="MIT" />
+  <a href="https://buymeacoffee.com/sylph611"><img src="https://img.shields.io/badge/☕-buy_me_a_coffee-FFDD00" alt="coffee" /></a>
+</p>
 
 - 코드/repo 이름: `poodle-pet`
 - 배포 프로그램명: **뽁이 (BOKKI)**
 - 최신 릴리즈: [Releases](https://github.com/sylph611/poodle-pet/releases)
 - 재밌게 쓰셨다면 ☕ [Buy me a coffee](https://buymeacoffee.com/sylph611)
+
+## 스크린샷
+
+<table>
+  <tr>
+    <td align="center"><b>메모</b><br><img src="docs/media/memo.png" width="240" alt="메모" /></td>
+    <td align="center"><b>바로가기</b><br><img src="docs/media/launcher.png" width="240" alt="바로가기" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>설정</b><br><img src="docs/media/settings.png" width="240" alt="설정" /></td>
+    <td align="center"><b>뽁이에 대해</b><br><img src="docs/media/about.png" width="240" alt="뽁이에 대해" /></td>
+  </tr>
+</table>
 
 ## 실행 (개발)
 
