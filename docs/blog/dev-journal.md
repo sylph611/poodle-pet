@@ -23,6 +23,7 @@
 | 2026-09-30 | `f64aa8d` | 배포 준비: 설정 창(단축키·자동시작·스프라이트·속도) + 도움말/첫실행 + Export/Import + idle CPU 최적화 + LICENSE/CHANGELOG |
 | 2026-09-30 | `6fbce69` | v0.2.0 태그 · `BOKKI Setup 0.2.0.exe` 빌드 · GitHub Release 대기 |
 | 2026-09-30 | `3f6e7bb` | 스프라이트 크기 hot-swap · 트레이 아이콘 crop · About 다이얼로그 (저자·GitHub 링크) |
+| 2026-09-30 | `0101bb3` | 트레이 아이콘 tight bbox crop → 48px · Buy me a coffee 링크 (About/Settings/README) |
 
 ---
 
