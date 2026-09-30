@@ -145,6 +145,9 @@ async function main() {
     e.preventDefault();
     window.settings.showAbout();
   });
+  document.getElementById("buy-coffee")!.addEventListener("click", () => {
+    window.settings.openCoffee();
+  });
 }
 
 main();

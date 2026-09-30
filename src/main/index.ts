@@ -317,12 +317,16 @@ async function bootstrap() {
         "",
         "Character: AI 생성 오리지널 캐릭터 (실 반려견 사진 참조)",
         "Built with Electron + TypeScript · Claude Code로 개발",
+        "",
+        "재밌게 쓰셨다면 커피 한 잔 사주세요 ☕",
+        "buymeacoffee.com/sylph611"
       ].join("\n"),
-      buttons: ["GitHub 열기", "확인"],
-      defaultId: 1,
-      cancelId: 1
+      buttons: ["☕ Buy me a coffee", "GitHub", "확인"],
+      defaultId: 2,
+      cancelId: 2
     }).then((r) => {
-      if (r.response === 0) shell.openExternal("https://github.com/sylph611/poodle-pet");
+      if (r.response === 0) shell.openExternal("https://buymeacoffee.com/sylph611");
+      else if (r.response === 1) shell.openExternal("https://github.com/sylph611/poodle-pet");
     });
   }
 
@@ -509,6 +513,7 @@ async function bootstrap() {
   });
   ipcMain.on("settings:showHelp", showHelpDialog);
   ipcMain.on("settings:showAbout", showAboutDialog);
+  ipcMain.on("settings:openCoffee", () => shell.openExternal("https://buymeacoffee.com/sylph611"));
 
   // First-run: 도움말 자동 표시
   if (isFirstRun) {

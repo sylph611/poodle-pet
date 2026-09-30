@@ -194,6 +194,18 @@ input[type="checkbox"] {
 .add-btn:active { transform: translateY(0); }
 .add-btn.wide { width: 100%; }
 
+.add-btn.coffee {
+  background: #FFDD00;
+  color: #000;
+  border-color: #E5C700;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.add-btn.coffee:hover {
+  background: #FFEE33;
+  border-color: #D4B800;
+}
+
 .footer {
   text-align: center;
   color: var(--text-muted);

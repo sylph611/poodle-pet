@@ -15,6 +15,7 @@ Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 
 - 코드/repo 이름: `poodle-pet`
 - 배포 프로그램명: **뽁이 (BOKKI)**
 - 최신 릴리즈: [Releases](https://github.com/sylph611/poodle-pet/releases)
+- 재밌게 쓰셨다면 ☕ [Buy me a coffee](https://buymeacoffee.com/sylph611)
 
 ## 실행 (개발)
 

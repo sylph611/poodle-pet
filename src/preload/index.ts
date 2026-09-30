@@ -47,7 +47,8 @@ const settings = {
   importLaunchers: () => ipcRenderer.invoke("settings:importLaunchers") as Promise<{ ok: boolean; count?: number; error?: string }>,
   openDataFolder: () => ipcRenderer.send("settings:openDataFolder"),
   showHelp: () => ipcRenderer.send("settings:showHelp"),
-  showAbout: () => ipcRenderer.send("settings:showAbout")
+  showAbout: () => ipcRenderer.send("settings:showAbout"),
+  openCoffee: () => ipcRenderer.send("settings:openCoffee")
 };
 
 contextBridge.exposeInMainWorld("pet", pet);
