@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "gen:sprite": "node scripts/gen-placeholder-sprite.mjs",
+    "gen:tray": "node scripts/gen-tray-icon.mjs",
     "pack": "electron-vite build && electron-builder --win"
   },
   "devDependencies": {
