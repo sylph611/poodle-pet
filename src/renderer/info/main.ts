@@ -14,7 +14,7 @@ tabs.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab!)));
 window.info.onShow((section) => showTab(section));
 
 async function initAbout() {
-  // 스프라이트 첫 프레임을 hero icon으로
+  // 스프라이트 첫 프레임을 About·Help 두 탭 hero icon으로
   try {
     const s = await window.pet.getSprite();
     const cvs = document.createElement("canvas");
@@ -29,8 +29,11 @@ async function initAbout() {
       i.src = s.imageDataUrl;
     });
     ctx.drawImage(img, 0, 0, s.manifest.frameSize, s.manifest.frameSize, 0, 0, s.manifest.frameSize, s.manifest.frameSize);
-    const heroIcon = document.getElementById("hero-icon") as HTMLImageElement;
-    if (heroIcon) heroIcon.src = cvs.toDataURL();
+    const dataUrl = cvs.toDataURL();
+    const heroAbout = document.getElementById("hero-icon") as HTMLImageElement | null;
+    const heroHelp = document.getElementById("hero-icon-help") as HTMLImageElement | null;
+    if (heroAbout) heroAbout.src = dataUrl;
+    if (heroHelp) heroHelp.src = dataUrl;
   } catch { /* 무시 — hero icon 없어도 OK */ }
 
   // 앱 버전 반영
