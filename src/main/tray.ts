@@ -24,7 +24,7 @@ export function createTray(
       }
     }
   ]);
-  tray.setToolTip("Poodle Pet");
+  tray.setToolTip("뽁이");
   tray.setContextMenu(menu);
   return tray;
 }

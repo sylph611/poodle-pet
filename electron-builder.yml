@@ -1,5 +1,5 @@
-appId: com.sylph.poodle-pet
-productName: Poodle Pet
+appId: com.sylph.bokki
+productName: BOKKI
 directories:
   output: dist
 files:
@@ -17,4 +17,4 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  shortcutName: Poodle Pet
+  shortcutName: 뽁이

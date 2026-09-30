@@ -1,7 +1,7 @@
 {
-  "name": "poodle-pet",
+  "name": "bokki",
   "version": "0.1.0",
-  "description": "Desktop pet with memos and shortcuts",
+  "description": "뽁이 (BOKKI) — desktop poodle pet with memos and shortcuts",
   "author": "sylph",
   "private": true,
   "type": "module",
