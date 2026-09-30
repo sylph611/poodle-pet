@@ -17,6 +17,7 @@
 | 2026-09-30 | `fa845e5` | main 머지, 태그 `v0.1.0`, win-unpacked 빌드 → 도그푸드 단계 시작 |
 | 2026-09-30 | `8132195` | `signAndEditExecutable:false` → NSIS 인스톨러(77MB) + zip(105MB) 배포 성공 |
 | 2026-09-30 | `6db8889` | 드래그 시 강아지 도망가는 버그 fix (pointer capture + display.bounds 클램프) |
+| 2026-09-30 | `9994547` | 다중 모니터 크로스 지원 (OS 커서 기반 + 클램프 제거) |
 
 ---
 
@@ -554,9 +555,49 @@ const disp = displayBoundsContainingElectron(screen, newPos);
 - 클램프 영역을 상황에 맞게 나눠야 함: **드래그 중 = 화면 전체(display.bounds)**, **정지/걷기 = 작업 영역(workArea)**.
 - 두 원인이 콤보로 발생하는 버그는 **한 개만 고치면 재현이 줄어들지만 사라지지 않음**. 같이 고쳐야 근본 해결.
 
+## 7.2 다중 모니터로 드래그 안 넘어감
+
+**증상**: 강아지를 잡고 옆 모니터로 드래그해도 현재 모니터 경계에서 멈춤.
+
+**원인 2가지**:
+
+1. **renderer의 `e.screenX` 신뢰성 낮음** — Windows DPI-per-monitor 환경에서 Chromium이 반환하는 screenX가 source 모니터 좌표계인지 virtual screen 좌표계인지 상황 따라 다름. Cross-monitor 이동 시 delta가 어긋남.
+2. **display.bounds 클램프도 여전히 단일 모니터 한계** — Ch 7.1에서 workArea → display.bounds로 완화했지만 여전히 하나의 display 안으로 제한.
+
+**Fix (`9994547`)**:
+
+```ts
+// dragStart: OS 커서 - 창 좌상단 = 오프셋 캡처
+ipcMain.on("pet:action", (_, kind) => {
+  if (kind === "dragStart") {
+    const b = win.getBounds();
+    const cursor = screen.getCursorScreenPoint();  // OS 레벨 — 항상 정확
+    dragAnchor = { offsetX: cursor.x - b.x, offsetY: cursor.y - b.y };
+  }
+});
+
+// dragMove: 커서 위치 - 오프셋 = 창 위치. 클램프 없음.
+ipcMain.on("pet:dragMove", () => {
+  if (!dragAnchor) return;
+  const cursor = screen.getCursorScreenPoint();
+  win.setBounds({
+    x: cursor.x - dragAnchor.offsetX,
+    y: cursor.y - dragAnchor.offsetY,
+    width: petSize, height: petSize
+  });
+});
+```
+
+- **커서 위치는 OS가 관리하므로 다중 모니터·DPI·해상도 무관하게 항상 정확**
+- 클램프 제거해도 안전 — 커서는 항상 어느 모니터 위에 있으므로 창이 완전히 사라질 일 없음
+- renderer의 delta는 여전히 IPC로 오지만 main에서 무시
+
+**교훈**: **커서 위치가 필요할 땐 renderer 이벤트가 아니라 main의 `screen.getCursorScreenPoint()`를 쓰자.** Renderer 이벤트는 browser 추상화 layer를 거치며 좌표계 이슈가 생김. OS API 직접 호출이 신뢰성 최고.
+
 ## 블로그 소재 후보
 
 - **글감 14**: "드래그 UI에서 커서 이탈 없이 창 따라오게 하는 두 가지 fix" (Ch 7.1)
+- **글감 15**: "Electron 다중 모니터 드래그 - renderer의 e.screenX를 버리자" (Ch 7.2)
 
 ---
 
@@ -679,3 +720,4 @@ b0d5faf  sprite IPC 콘텐츠 반환 (file:// 우회)
 12. Popover 3종세트 (토글·외부 클릭·드래그 유지) (Ch 6.1~6.2)
 13. CSS 변수 팔레트로 앱 리디자인 (Ch 6.3)
 14. 드래그 중 커서 이탈 방지 (pointer capture + display.bounds) (Ch 7.1)
+15. 다중 모니터 드래그 (OS 커서 기반) (Ch 7.2)
