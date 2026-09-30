@@ -14,8 +14,8 @@ import { dirname, join } from "node:path";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const srcPath = join(HERE, "..", "characters", "poodle", "tray-icon-source.png");
 const dstPath = join(HERE, "..", "characters", "poodle", "tray-icon.png");
-const TARGET = 128;   // 128x128 (Windows 트레이는 이후 자동으로 32/48로 리샘플)
-const PAD = 4;        // 상하좌우 여백 pixel
+const TARGET = 256;   // 256×256 (하이 DPI 대응 — Windows가 크게 표시 가능)
+const FILL_MODE = "cover"; // "cover" (얼굴이 캔버스 꽉 채움, 양쪽 살짝 crop) | "contain" (여백 있음, 크롭 없음)
 
 const ALPHA_THRESHOLD = 32;
 
@@ -40,24 +40,33 @@ const bw = maxX - minX + 1;
 const bh = maxY - minY + 1;
 console.log(`bbox: ${bw}×${bh} at (${minX},${minY})`);
 
-// 정사각으로 채우되 여백 PAD 반영. 짧은 축 기준으로 스케일.
-const inner = TARGET - PAD * 2;
-const scale = Math.min(inner / bw, inner / bh);
-const outW = Math.max(1, Math.round(bw * scale));
-const outH = Math.max(1, Math.round(bh * scale));
-const offX = Math.floor((TARGET - outW) / 2);
-const offY = Math.floor((TARGET - outH) / 2);
+// cover: 얼굴이 캔버스를 꽉 채우도록 짧은 축 기준 스케일 (긴 축 살짝 crop).
+// contain: 얼굴 완전히 안 잘리도록 긴 축 기준 스케일 (여백 발생).
+const scale = FILL_MODE === "cover"
+  ? TARGET / Math.min(bw, bh)   // 짧은 쪽이 TARGET에 맞음
+  : TARGET / Math.max(bw, bh);  // 긴 쪽이 TARGET에 맞음
+
+const scaledW = Math.round(bw * scale);
+const scaledH = Math.round(bh * scale);
+// 캔버스 중앙에 배치 (cover면 두 축 중 하나는 캔버스보다 커서 잘림)
+const offX = Math.floor((TARGET - scaledW) / 2);
+const offY = Math.floor((TARGET - scaledH) / 2);
 
 const dst = new PNG({ width: TARGET, height: TARGET });
 dst.data.fill(0);
 
-// 알파 가중 다운샘플 (bbox 영역 → outW×outH)
-for (let y = 0; y < outH; y++) {
-  const sy0 = minY + Math.floor(y * bh / outH);
-  const sy1 = minY + Math.floor((y + 1) * bh / outH);
-  for (let x = 0; x < outW; x++) {
-    const sx0 = minX + Math.floor(x * bw / outW);
-    const sx1 = minX + Math.floor((x + 1) * bw / outW);
+// 알파 가중 다운샘플 — 목적 픽셀별로 원본 bbox의 대응 블록 평균
+for (let dy = 0; dy < TARGET; dy++) {
+  // 목적 y에 대응하는 원본 y 범위
+  const localY = dy - offY;
+  if (localY < 0 || localY >= scaledH) continue;
+  const sy0 = minY + Math.floor(localY * bh / scaledH);
+  const sy1 = minY + Math.floor((localY + 1) * bh / scaledH);
+  for (let dx = 0; dx < TARGET; dx++) {
+    const localX = dx - offX;
+    if (localX < 0 || localX >= scaledW) continue;
+    const sx0 = minX + Math.floor(localX * bw / scaledW);
+    const sx1 = minX + Math.floor((localX + 1) * bw / scaledW);
     let sumR = 0, sumG = 0, sumB = 0, sumA = 0, count = 0;
     for (let sy = sy0; sy < sy1; sy++) {
       for (let sx = sx0; sx < sx1; sx++) {
@@ -70,7 +79,7 @@ for (let y = 0; y < outH; y++) {
         count++;
       }
     }
-    const di = ((offY + y) * TARGET + (offX + x)) * 4;
+    const di = (dy * TARGET + dx) * 4;
     if (sumA === 0 || count === 0) continue;
     dst.data[di]     = Math.round(sumR / sumA);
     dst.data[di + 1] = Math.round(sumG / sumA);
@@ -80,4 +89,4 @@ for (let y = 0; y < outH; y++) {
 }
 
 writeFileSync(dstPath, PNG.sync.write(dst));
-console.log(`wrote ${dstPath} (${TARGET}×${TARGET}, inner ${outW}×${outH})`);
+console.log(`wrote ${dstPath} (${TARGET}×${TARGET}, mode=${FILL_MODE}, scaled ${scaledW}×${scaledH})`);

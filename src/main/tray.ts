@@ -11,12 +11,12 @@ export type TrayActions = {
 
 function loadTrayIcon(characterDir: string): NativeImage {
   // 1순위: characters/poodle/tray-icon.png (사용자가 정면 얼굴 등 별도로 넣은 파일)
+  // 원본을 그대로 반환 — Windows Shell이 트레이 슬롯 크기에 맞춰 자동 스케일링.
+  // (수동 resize는 큰 이미지→작은 크기 다운스케일에서 bilinear로 뭉개짐)
   const customPath = join(characterDir, "tray-icon.png");
   if (existsSync(customPath)) {
     const custom = nativeImage.createFromPath(customPath);
-    if (!custom.isEmpty()) {
-      return custom.resize({ width: 48, height: 48, quality: "best" });
-    }
+    if (!custom.isEmpty()) return custom;
   }
 
   // 2순위: sprite.png 첫 idle 프레임에서 실루엣 bbox만 tight crop
