@@ -10,6 +10,7 @@ const pet = {
   onState: (cb: (s: string) => void) => ipcRenderer.on("pet:state", (_, s) => cb(s)),
   onFacing: (cb: (d: number) => void) => ipcRenderer.on("pet:facing", (_, d) => cb(d)),
   onToast: (cb: (p: { text: string; ms: number }) => void) => ipcRenderer.on("pet:toast", (_, p) => cb(p)),
+  onRescale: (cb: (p: { scale: number; size: number }) => void) => ipcRenderer.on("pet:rescale", (_, p) => cb(p)),
   action: (kind: "click" | "dragStart" | "dragEnd") => ipcRenderer.send("pet:action", kind),
   dragMove: (delta: { dx: number; dy: number }) => ipcRenderer.send("pet:dragMove", delta),
   openBubble: (anchor: { x: number; y: number }) => ipcRenderer.send("bubble:open", anchor),
@@ -45,7 +46,8 @@ const settings = {
   exportLaunchers: () => ipcRenderer.invoke("settings:exportLaunchers") as Promise<{ ok: boolean; path?: string; error?: string }>,
   importLaunchers: () => ipcRenderer.invoke("settings:importLaunchers") as Promise<{ ok: boolean; count?: number; error?: string }>,
   openDataFolder: () => ipcRenderer.send("settings:openDataFolder"),
-  showHelp: () => ipcRenderer.send("settings:showHelp")
+  showHelp: () => ipcRenderer.send("settings:showHelp"),
+  showAbout: () => ipcRenderer.send("settings:showAbout")
 };
 
 contextBridge.exposeInMainWorld("pet", pet);

@@ -60,7 +60,8 @@ function sortMemos(arr: Memo[]): Memo[] {
 async function bootstrap() {
   const manifest = loadManifest(characterDir);
   const scale = DEFAULT_SETTINGS.spriteScale;
-  const petSize = manifest.frameSize * scale;
+  // 스프라이트 크기는 설정에서 hot-swap 되도록 let
+  let petSize = manifest.frameSize * scale;
 
   const memosStore = new Store<Memo[]>("memos.json", []);
   const launchersStore = new Store<Launcher[]>("launchers.json", []);
@@ -302,6 +303,29 @@ async function bootstrap() {
   // 저장 (기본값 병합된 상태로)
   settingsStore.save(settings);
 
+  function showAboutDialog() {
+    dialog.showMessageBox({
+      type: "info",
+      title: "뽁이에 대해",
+      message: `뽁이 (BOKKI)  v${app.getVersion()}`,
+      detail: [
+        "Windows 데스크톱 갈색 픽셀아트 푸들 펫",
+        "",
+        "Made by  sylph611",
+        "License  MIT",
+        "GitHub   github.com/sylph611/poodle-pet",
+        "",
+        "Character: AI 생성 오리지널 캐릭터 (실 반려견 사진 참조)",
+        "Built with Electron + TypeScript · Claude Code로 개발",
+      ].join("\n"),
+      buttons: ["GitHub 열기", "확인"],
+      defaultId: 1,
+      cancelId: 1
+    }).then((r) => {
+      if (r.response === 0) shell.openExternal("https://github.com/sylph611/poodle-pet");
+    });
+  }
+
   function showHelpDialog() {
     dialog.showMessageBox({
       type: "info",
@@ -342,7 +366,8 @@ async function bootstrap() {
   const tray = createTray(win, {
     onQuit: () => loop.stop(),
     onOpenSettings: () => { settingsWin.show(); settingsWin.focus(); },
-    onShowHelp: showHelpDialog
+    onShowHelp: showHelpDialog,
+    onShowAbout: showAboutDialog
   }, characterDir);
 
   registerShortcut(settings.shortcutQuickMemo);
@@ -393,11 +418,20 @@ async function bootstrap() {
       walker.speedPxPerSec = patch.walkSpeedPxPerSec;
     }
     if (patch.spriteScale !== undefined && patch.spriteScale !== prev.spriteScale) {
-      // 스프라이트 크기는 창 크기 바뀌므로 렌더러 reload가 가장 간단.
-      // (petSize는 클로저에 고정이라 완전 반영에는 재시작 필요 — 다음 세션부터 적용)
-      win.reload();
+      // Hot swap: petSize 갱신 + 창 리사이즈 + walker 경계 갱신 + 렌더러에 새 크기 알림
+      const oldSize = petSize;
+      const newSize = manifest.frameSize * patch.spriteScale;
+      petSize = newSize;
+      const b = win.getBounds();
+      const centerX = b.x + Math.floor(oldSize / 2);
+      const disp = displayContainingElectron(screen, { x: b.x, y: b.y });
+      const newX = Math.max(disp.x, Math.min(disp.x + disp.width - newSize, centerX - Math.floor(newSize / 2)));
+      win.setBounds({ x: newX, y: groundY(disp, newSize), width: newSize, height: newSize });
+      walker.minX = disp.x;
+      walker.maxX = disp.x + disp.width - newSize;
+      walker.x = newX;
       if (petWindowAlive()) {
-        win.webContents.send("pet:toast", { text: "다음 실행부터 적용돼요", ms: 2000 });
+        win.webContents.send("pet:rescale", { scale: patch.spriteScale, size: newSize });
       }
     }
     settingsStore.save(settings);
@@ -474,6 +508,7 @@ async function bootstrap() {
     shell.openPath(userDataRoot());
   });
   ipcMain.on("settings:showHelp", showHelpDialog);
+  ipcMain.on("settings:showAbout", showAboutDialog);
 
   // First-run: 도움말 자동 표시
   if (isFirstRun) {

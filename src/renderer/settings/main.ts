@@ -134,9 +134,16 @@ async function main() {
     window.settings.openDataFolder();
   });
 
-  // 도움말
+  // 도움말·정보
   document.getElementById("show-help")!.addEventListener("click", () => {
     window.settings.showHelp();
+  });
+  document.getElementById("show-about")!.addEventListener("click", () => {
+    window.settings.showAbout();
+  });
+  document.getElementById("repo-link")!.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.settings.showAbout();
   });
 }
 

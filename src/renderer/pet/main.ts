@@ -12,7 +12,7 @@ async function main() {
     i.src = imageDataUrl;
   });
 
-  const size = manifest.frameSize * scale;
+  let size = manifest.frameSize * scale;
   const cvs = document.getElementById("pet") as HTMLCanvasElement;
   cvs.width = size; cvs.height = size;
   const ctx = cvs.getContext("2d")!;
@@ -25,6 +25,13 @@ async function main() {
 
   window.pet.onState(s => { anim = s in manifest.animations ? s : "idle"; frame = 0; });
   window.pet.onFacing(d => { facing = d; });
+  // 설정에서 스프라이트 크기 변경 시 canvas 리사이즈
+  window.pet.onRescale(({ size: newSize }) => {
+    size = newSize;
+    cvs.width = size;
+    cvs.height = size;
+    ctx.imageSmoothingEnabled = false;  // 리사이즈 후 재설정 필요
+  });
 
   function draw(now: number) {
     const def = manifest.animations[anim];
