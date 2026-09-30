@@ -4,6 +4,7 @@ dist/
 test-results/
 playwright-report/
 .superpowers/
+docs/blog/drafts/
 *.log
 .DS_Store
 Thumbs.db
