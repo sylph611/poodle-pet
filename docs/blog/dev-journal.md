@@ -18,6 +18,8 @@
 | 2026-09-30 | `8132195` | `signAndEditExecutable:false` → NSIS 인스톨러(77MB) + zip(105MB) 배포 성공 |
 | 2026-09-30 | `6db8889` | 드래그 시 강아지 도망가는 버그 fix (pointer capture + display.bounds 클램프) |
 | 2026-09-30 | `9994547` | 다중 모니터 크로스 지원 (OS 커서 기반 + 클램프 제거) |
+| 2026-09-30 | `f52f2df` | 배포 프로그램명 "뽁이 (BOKKI)"로 변경 (내부 repo는 poodle-pet 유지) |
+| 2026-09-30 | `c1a314e` | GitHub push (https://github.com/sylph611/poodle-pet) — main + v0.1.0 태그 |
 
 ---
 
