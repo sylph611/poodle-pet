@@ -35,6 +35,26 @@ function formatKbd(accel: string): string {
 async function main() {
   const s = await window.settings.get();
 
+  // 스프라이트 첫 프레임을 "뽁이에 대해" 버튼 아이콘으로
+  try {
+    const sprite = await window.pet.getSprite();
+    const cvs = document.createElement("canvas");
+    cvs.width = sprite.manifest.frameSize;
+    cvs.height = sprite.manifest.frameSize;
+    const ctx = cvs.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = sprite.imageDataUrl;
+    });
+    ctx.drawImage(img, 0, 0, sprite.manifest.frameSize, sprite.manifest.frameSize, 0, 0, sprite.manifest.frameSize, sprite.manifest.frameSize);
+    const dataUrl = cvs.toDataURL();
+    const poodleIcon = document.getElementById("btn-poodle-icon") as HTMLImageElement | null;
+    if (poodleIcon) poodleIcon.src = dataUrl;
+  } catch { /* 무시 */ }
+
   // 스프라이트 크기
   const scaleBtns = document.querySelectorAll<HTMLButtonElement>('.scale-buttons button');
   function markScale(n: number) {
