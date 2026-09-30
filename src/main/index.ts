@@ -7,6 +7,7 @@ import { createBubbleWindow, bubbleSize } from "./bubble-window";
 import { createMemoWindow } from "./memo-window";
 import { createLauncherWindow } from "./launcher-window";
 import { createSettingsWindow } from "./settings-window";
+import { createInfoWindow } from "./info-window";
 import { classify, inferName, open as openLauncher, iconDataUrl } from "./launcher";
 import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
@@ -111,6 +112,13 @@ async function bootstrap() {
     settingsWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/settings/index.html`);
   } else {
     settingsWin.loadFile(join(__dirname, "../renderer/settings/index.html"));
+  }
+
+  const infoWin = createInfoWindow();
+  if (process.env.ELECTRON_RENDERER_URL) {
+    infoWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/info/index.html`);
+  } else {
+    infoWin.loadFile(join(__dirname, "../renderer/info/index.html"));
   }
 
   // Launchers helpers
@@ -303,53 +311,14 @@ async function bootstrap() {
   // 저장 (기본값 병합된 상태로)
   settingsStore.save(settings);
 
-  function showAboutDialog() {
-    dialog.showMessageBox({
-      type: "info",
-      title: "뽁이에 대해",
-      message: `뽁이 (BOKKI)  v${app.getVersion()}`,
-      detail: [
-        "Windows 데스크톱 갈색 픽셀아트 푸들 펫",
-        "",
-        "Made by  sylph611",
-        "License  MIT",
-        "GitHub   github.com/sylph611/poodle-pet",
-        "",
-        "Character: AI 생성 오리지널 캐릭터 (실 반려견 사진 참조)",
-        "Built with Electron + TypeScript · Claude Code로 개발",
-        "",
-        "재밌게 쓰셨다면 커피 한 잔 사주세요 ☕",
-        "buymeacoffee.com/sylph611"
-      ].join("\n"),
-      buttons: ["☕ Buy me a coffee", "GitHub", "확인"],
-      defaultId: 2,
-      cancelId: 2
-    }).then((r) => {
-      if (r.response === 0) shell.openExternal("https://buymeacoffee.com/sylph611");
-      else if (r.response === 1) shell.openExternal("https://github.com/sylph611/poodle-pet");
-    });
+  function showInfoWindow(section: "help" | "about") {
+    if (infoWin.isDestroyed()) return;
+    infoWin.show();
+    infoWin.focus();
+    infoWin.webContents.send("info:show", section);
   }
-
-  function showHelpDialog() {
-    dialog.showMessageBox({
-      type: "info",
-      title: "뽁이 사용법",
-      message: "뽁이와 잘 지내는 법",
-      detail: [
-        "🐩 푸들 클릭 → 말풍선 메뉴 (📝 메모 · 🚀 바로가기 · 💤 재우기)",
-        "✋ 푸들 드래그 → 원하는 곳으로 이동 (다중 모니터 OK)",
-        "📂 파일/폴더를 푸들에 드롭 → 바로가기 자동 등록",
-        `⌨️  ${settings.shortcutQuickMemo.replace("CommandOrControl", "Ctrl")} → 빠른 메모`,
-        "",
-        "⚠️  메모/바로가기 창의 X 버튼은 창을 숨기기만 합니다.",
-        "    앱 종료는 반드시 트레이 아이콘 우클릭 → 종료.",
-        "",
-        `📁 데이터 위치: %APPDATA%\\BOKKI\\`
-      ].join("\n"),
-      buttons: ["확인"],
-      defaultId: 0
-    });
-  }
+  const showAboutDialog = () => showInfoWindow("about");
+  const showHelpDialog = () => showInfoWindow("help");
 
   // 재사용 가능한 shortcut 재등록
   let shortcutRegistered = false;
@@ -514,6 +483,8 @@ async function bootstrap() {
   ipcMain.on("settings:showHelp", showHelpDialog);
   ipcMain.on("settings:showAbout", showAboutDialog);
   ipcMain.on("settings:openCoffee", () => shell.openExternal("https://buymeacoffee.com/sylph611"));
+  ipcMain.handle("info:getVersion", () => app.getVersion());
+  ipcMain.on("info:openRepo", () => shell.openExternal("https://github.com/sylph611/poodle-pet"));
 
   // First-run: 도움말 자동 표시
   if (isFirstRun) {

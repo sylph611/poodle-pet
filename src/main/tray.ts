@@ -1,6 +1,6 @@
-import { app, Tray, Menu, nativeImage, BrowserWindow } from "electron";
+import { app, Tray, Menu, nativeImage, BrowserWindow, NativeImage } from "electron";
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 export type TrayActions = {
   onQuit: () => void;
@@ -9,13 +9,17 @@ export type TrayActions = {
   onShowAbout: () => void;
 };
 
-export function createTray(
-  pet: BrowserWindow,
-  actions: TrayActions,
-  characterDir: string
-): Tray {
-  // 스프라이트 첫 idle 프레임 → 강아지 실제 bounding box만 tight crop → 확대.
-  // 32×32 프레임 안에 강아지가 실제로는 ~20×18 정도만 차지해서 리사이즈만 하면 작아 보임.
+function loadTrayIcon(characterDir: string): NativeImage {
+  // 1순위: characters/poodle/tray-icon.png (사용자가 정면 얼굴 등 별도로 넣은 파일)
+  const customPath = join(characterDir, "tray-icon.png");
+  if (existsSync(customPath)) {
+    const custom = nativeImage.createFromPath(customPath);
+    if (!custom.isEmpty()) {
+      return custom.resize({ width: 48, height: 48, quality: "best" });
+    }
+  }
+
+  // 2순위: sprite.png 첫 idle 프레임에서 실루엣 bbox만 tight crop
   const manifest = JSON.parse(readFileSync(join(characterDir, "manifest.json"), "utf8")) as {
     frameSize: number;
     animations: Record<string, { row: number; frames: number; fps: number }>;
@@ -25,8 +29,7 @@ export function createTray(
   const sheet = nativeImage.createFromPath(join(characterDir, "sprite.png"));
   const idleFrame = sheet.crop({ x: 0, y: idleRow * f, width: f, height: f });
 
-  // 실루엣 bbox 찾기 (alpha > 32)
-  const bmp = idleFrame.toBitmap(); // BGRA on Windows
+  const bmp = idleFrame.toBitmap();
   const sz = idleFrame.getSize();
   let minX = sz.width, maxX = -1, minY = sz.height, maxY = -1;
   for (let y = 0; y < sz.height; y++) {
@@ -40,12 +43,18 @@ export function createTray(
       }
     }
   }
-  // bbox이 유효하면 tight crop, 아니면 원본 프레임 사용
   const cropped = maxX >= 0
     ? idleFrame.crop({ x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 })
     : idleFrame;
-  // 48×48로 확대 (하이 DPI 스케일링 대비 · Windows 트레이는 자동으로 적절 크기 선택)
-  const icon = cropped.resize({ width: 48, height: 48, quality: "best" });
+  return cropped.resize({ width: 48, height: 48, quality: "best" });
+}
+
+export function createTray(
+  pet: BrowserWindow,
+  actions: TrayActions,
+  characterDir: string
+): Tray {
+  const icon = loadTrayIcon(characterDir);
   const tray = new Tray(icon);
   const menu = Menu.buildFromTemplate([
     {

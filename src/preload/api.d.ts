@@ -1,5 +1,11 @@
-import type { PetApi, MemosApi, LaunchersApi, SettingsApi } from "./index";
+import type { PetApi, MemosApi, LaunchersApi, SettingsApi, InfoApi } from "./index";
 declare global {
-  interface Window { pet: PetApi; memos: MemosApi; launchers: LaunchersApi; settings: SettingsApi }
+  interface Window {
+    pet: PetApi;
+    memos: MemosApi;
+    launchers: LaunchersApi;
+    settings: SettingsApi;
+    info: InfoApi;
+  }
 }
 export {};

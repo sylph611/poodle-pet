@@ -23,7 +23,8 @@ export default defineConfig({
           bubble: resolve(__dirname, "src/renderer/bubble/index.html"),
           memo: resolve(__dirname, "src/renderer/memo/index.html"),
           launcher: resolve(__dirname, "src/renderer/launcher/index.html"),
-          settings: resolve(__dirname, "src/renderer/settings/index.html")
+          settings: resolve(__dirname, "src/renderer/settings/index.html"),
+          info: resolve(__dirname, "src/renderer/info/index.html")
         }
       }
     }

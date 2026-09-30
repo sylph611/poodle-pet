@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>뽁이 정보</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="wrap">
+      <div class="tabs">
+        <button class="tab" data-tab="help">❓ 도움말</button>
+        <button class="tab" data-tab="about">🐩 뽁이에 대해</button>
+      </div>
+
+      <!-- 도움말 탭 -->
+      <div class="view" data-view="help">
+        <div class="hero">
+          <div class="hero-emoji">🐩</div>
+          <div class="hero-title">뽁이와 잘 지내는 법</div>
+          <div class="hero-sub">Windows 데스크톱 갈색 푸들 펫</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">기본 조작</div>
+          <ul class="feature-list">
+            <li><span class="ico">👆</span><div><b>클릭</b><span class="desc">말풍선 메뉴 (📝 메모 · 🚀 바로가기 · 💤 재우기)</span></div></li>
+            <li><span class="ico">✋</span><div><b>드래그</b><span class="desc">원하는 곳으로 이동 · 다중 모니터 OK · 놓으면 중력 착지</span></div></li>
+            <li><span class="ico">📂</span><div><b>파일/폴더 드롭</b><span class="desc">푸들에게 놓으면 바로가기로 자동 등록</span></div></li>
+            <li><span class="ico">⌨️</span><div><b><span id="shortcut-kbd" class="kbd">Ctrl+Alt+M</span></b><span class="desc">빠른 메모 창 열기 (설정에서 변경 가능)</span></div></li>
+          </ul>
+        </div>
+
+        <div class="section warn-section">
+          <div class="section-title">⚠️ 종료 방법</div>
+          <p class="warn-text">
+            메모·바로가기 창의 <b>X 버튼은 창을 숨기기만</b> 합니다.<br>
+            앱을 완전히 끄려면 <b>트레이 아이콘 우클릭 → 종료</b>.
+          </p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">데이터 위치</div>
+          <div class="mono">%APPDATA%\BOKKI\</div>
+          <div class="desc-small">memos.json · launchers.json · settings.json · backup/YYYY-MM-DD/</div>
+        </div>
+      </div>
+
+      <!-- 뽁이에 대해 탭 -->
+      <div class="view" data-view="about">
+        <div class="hero">
+          <img class="hero-icon" id="hero-icon" alt="뽁이" />
+          <div class="hero-title">뽁이 <span class="version-badge" id="version-badge">v0.2.0</span></div>
+          <div class="hero-sub">BOKKI — Windows 데스크톱 픽셀아트 푸들 펫</div>
+        </div>
+
+        <div class="section">
+          <div class="info-grid">
+            <div class="info-label">Made by</div><div class="info-value"><b>sylph611</b></div>
+            <div class="info-label">License</div><div class="info-value">MIT</div>
+            <div class="info-label">Repo</div><div class="info-value"><a href="#" id="repo-link">github.com/sylph611/poodle-pet</a></div>
+          </div>
+        </div>
+
+        <div class="section credit-section">
+          <div class="section-title">크레딧</div>
+          <p class="credit-text">
+            <b>Character</b>: AI 생성 오리지널 캐릭터<br>
+            <span class="desc-small">실 반려견 사진을 참조로 픽셀아트 스프라이트 생성</span>
+          </p>
+          <p class="credit-text">
+            <b>Built with</b>: Electron + TypeScript · 개발은 Claude Code
+          </p>
+        </div>
+
+        <div class="cta-row">
+          <button class="cta coffee" id="btn-coffee">☕ Buy me a coffee</button>
+          <button class="cta ghost" id="btn-github">GitHub</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

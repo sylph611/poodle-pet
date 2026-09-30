@@ -37,6 +37,13 @@ const launchers = {
   pickFile: () => ipcRenderer.invoke("launchers:pickFile") as Promise<string | null>
 };
 
+const info = {
+  onShow: (cb: (section: "help" | "about") => void) =>
+    ipcRenderer.on("info:show", (_, s) => cb(s)),
+  getVersion: () => ipcRenderer.invoke("info:getVersion") as Promise<string>,
+  openRepo: () => ipcRenderer.send("info:openRepo")
+};
+
 const settings = {
   get: () => ipcRenderer.invoke("settings:get") as Promise<Settings>,
   update: (patch: Partial<Settings>) =>
@@ -55,7 +62,9 @@ contextBridge.exposeInMainWorld("pet", pet);
 contextBridge.exposeInMainWorld("memos", memos);
 contextBridge.exposeInMainWorld("launchers", launchers);
 contextBridge.exposeInMainWorld("settings", settings);
+contextBridge.exposeInMainWorld("info", info);
 export type PetApi = typeof pet;
 export type MemosApi = typeof memos;
 export type LaunchersApi = typeof launchers;
 export type SettingsApi = typeof settings;
+export type InfoApi = typeof info;

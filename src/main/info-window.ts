@@ -1,14 +1,16 @@
 import { BrowserWindow } from "electron";
 import { join } from "node:path";
 
-export function createSettingsWindow(): BrowserWindow {
+export function createInfoWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 440,
-    height: 780,
+    width: 460,
+    height: 580,
     frame: true,
-    resizable: true,
+    resizable: false,
     show: false,
-    title: "설정 · 뽁이",
+    minimizable: false,
+    maximizable: false,
+    title: "뽁이 정보",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       contextIsolation: true,
