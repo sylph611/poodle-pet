@@ -26,6 +26,8 @@
 | 2026-09-30 | `0101bb3` | 트레이 아이콘 tight bbox crop → 48px · Buy me a coffee 링크 (About/Settings/README) |
 | 2026-09-30 | `1599568` | 도움말/About 커스텀 창(탭+카드) · 설정창 780px 확대 · tray-icon.png 커스텀 지원 |
 | 2026-09-30 | `864326a` | URL 추가·메모 수정 인라인 모달 (window.prompt Electron 미지원 fix) |
+| 2026-09-30 | `b201d77` | Playwright로 스크린샷 6장 자동 캡처 · README 배지·그리드 활성화 |
+| 2026-09-30 | `v0.2.0` | **GitHub Release 배포** — `BOKKI Setup 0.2.0.exe` + zip (github.com/sylph611/poodle-pet/releases/tag/v0.2.0) |
 
 ---
 
