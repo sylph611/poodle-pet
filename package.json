@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "뽁이 (BOKKI) — desktop poodle pet with memos and shortcuts",
   "author": "sylph",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sylph611/poodle-pet.git"
+  },
   "private": true,
   "type": "module",
   "main": "out/main/index.js",

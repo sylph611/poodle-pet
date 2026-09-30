@@ -1,9 +1,15 @@
 import { app, Tray, Menu, nativeImage, BrowserWindow } from "electron";
 import { join } from "node:path";
 
+export type TrayActions = {
+  onQuit: () => void;
+  onOpenSettings: () => void;
+  onShowHelp: () => void;
+};
+
 export function createTray(
   pet: BrowserWindow,
-  onQuit: () => void,
+  actions: TrayActions,
   characterDir: string
 ): Tray {
   const iconPath = join(characterDir, "sprite.png");
@@ -14,12 +20,13 @@ export function createTray(
       label: "숨기기/보이기",
       click: () => (pet.isVisible() ? pet.hide() : pet.show())
     },
-    { label: "설정 (준비 중)", enabled: false },
+    { label: "설정", click: () => actions.onOpenSettings() },
+    { label: "도움말", click: () => actions.onShowHelp() },
     { type: "separator" },
     {
       label: "종료",
       click: () => {
-        onQuit();
+        actions.onQuit();
         app.quit();
       }
     }

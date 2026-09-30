@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Memo, Launcher } from "../shared/types";
+import type { Memo, Launcher, Settings } from "../shared/types";
 
 const pet = {
   getSprite: () => ipcRenderer.invoke("sprite:get") as Promise<{
@@ -36,9 +36,23 @@ const launchers = {
   pickFile: () => ipcRenderer.invoke("launchers:pickFile") as Promise<string | null>
 };
 
+const settings = {
+  get: () => ipcRenderer.invoke("settings:get") as Promise<Settings>,
+  update: (patch: Partial<Settings>) =>
+    ipcRenderer.invoke("settings:update", patch) as Promise<{ shortcutOk?: boolean }>,
+  exportMemos: () => ipcRenderer.invoke("settings:exportMemos") as Promise<{ ok: boolean; path?: string; error?: string }>,
+  importMemos: () => ipcRenderer.invoke("settings:importMemos") as Promise<{ ok: boolean; count?: number; error?: string }>,
+  exportLaunchers: () => ipcRenderer.invoke("settings:exportLaunchers") as Promise<{ ok: boolean; path?: string; error?: string }>,
+  importLaunchers: () => ipcRenderer.invoke("settings:importLaunchers") as Promise<{ ok: boolean; count?: number; error?: string }>,
+  openDataFolder: () => ipcRenderer.send("settings:openDataFolder"),
+  showHelp: () => ipcRenderer.send("settings:showHelp")
+};
+
 contextBridge.exposeInMainWorld("pet", pet);
 contextBridge.exposeInMainWorld("memos", memos);
 contextBridge.exposeInMainWorld("launchers", launchers);
+contextBridge.exposeInMainWorld("settings", settings);
 export type PetApi = typeof pet;
 export type MemosApi = typeof memos;
 export type LaunchersApi = typeof launchers;
+export type SettingsApi = typeof settings;

@@ -3,8 +3,18 @@
 Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 펫.
 메모와 바로가기 기능이 함께 딸려 있습니다.
 
+<!-- TODO: 스크린샷/GIF 추가 -->
+<!--
+![뽁이 걷기](docs/media/bokki-walk.gif)
+![말풍선 메뉴](docs/media/bubble.png)
+![메모 창](docs/media/memo.png)
+![런처 창](docs/media/launcher.png)
+![설정 창](docs/media/settings.png)
+-->
+
 - 코드/repo 이름: `poodle-pet`
 - 배포 프로그램명: **뽁이 (BOKKI)**
+- 최신 릴리즈: [Releases](https://github.com/sylph611/poodle-pet/releases)
 
 ## 실행 (개발)
 

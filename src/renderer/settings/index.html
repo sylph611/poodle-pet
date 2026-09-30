@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>설정 · 뽁이</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div id="wrap">
+      <div class="header"><span class="emoji">⚙️</span><span>설정</span></div>
+
+      <section class="card">
+        <div class="section-title">모양·움직임</div>
+        <div class="row">
+          <label>스프라이트 크기</label>
+          <div class="scale-buttons">
+            <button data-scale="3">3x</button>
+            <button data-scale="4">4x</button>
+            <button data-scale="5">5x</button>
+          </div>
+        </div>
+        <div class="row">
+          <label>걷기 속도</label>
+          <div class="slider-wrap">
+            <input type="range" id="walk-speed" min="20" max="100" step="10" value="40" />
+            <span id="walk-speed-val">40</span>
+            <span class="unit">px/s</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">단축키·동작</div>
+        <div class="row">
+          <label>빠른 메모</label>
+          <div class="shortcut-wrap">
+            <span id="shortcut-display" class="kbd">Ctrl+Alt+M</span>
+            <button id="shortcut-change" class="mini">변경</button>
+          </div>
+        </div>
+        <div class="hint" id="shortcut-hint" style="display:none">
+          바꿀 조합을 누르세요 (Esc 취소)
+        </div>
+        <div class="row toggle-row">
+          <label for="hide-fs">전체화면 앱 실행 시 자동 숨김</label>
+          <input type="checkbox" id="hide-fs" />
+        </div>
+        <div class="row toggle-row">
+          <label for="auto-start">Windows 시작 시 자동 실행</label>
+          <input type="checkbox" id="auto-start" />
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">데이터</div>
+        <div class="btn-grid">
+          <button class="add-btn" id="export-memos">📝 메모 내보내기</button>
+          <button class="add-btn" id="import-memos">📥 메모 가져오기</button>
+          <button class="add-btn" id="export-launchers">🚀 바로가기 내보내기</button>
+          <button class="add-btn" id="import-launchers">📥 바로가기 가져오기</button>
+        </div>
+        <button class="add-btn wide" id="open-data-folder">📁 데이터 폴더 열기</button>
+        <div class="hint">%APPDATA%\BOKKI\ (memos.json, launchers.json, settings.json, backup/)</div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">도움말</div>
+        <button class="add-btn wide" id="show-help">❓ 사용법 보기</button>
+      </section>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

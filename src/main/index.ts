@@ -1,20 +1,22 @@
-import { app, ipcMain, screen, BrowserWindow, globalShortcut, dialog } from "electron";
+import { app, ipcMain, screen, BrowserWindow, globalShortcut, dialog, shell } from "electron";
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createPetWindow } from "./pet-window";
 import { createBubbleWindow, bubbleSize } from "./bubble-window";
 import { createMemoWindow } from "./memo-window";
 import { createLauncherWindow } from "./launcher-window";
+import { createSettingsWindow } from "./settings-window";
 import { classify, inferName, open as openLauncher, iconDataUrl } from "./launcher";
 import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
-import type { Memo, Launcher } from "../shared/types";
+import type { Memo, Launcher, Settings } from "../shared/types";
 import { PetController } from "./pet-controller";
 import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
 import { Store, runDailyBackup, settingsStore } from "./store";
 import { registerQuickMemo } from "./shortcuts";
+import { userDataRoot, filePath } from "./paths";
 
 const characterDir = join(__dirname, "../../characters/poodle");
 
@@ -101,6 +103,13 @@ async function bootstrap() {
     launcherWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/launcher/index.html`);
   } else {
     launcherWin.loadFile(join(__dirname, "../renderer/launcher/index.html"));
+  }
+
+  const settingsWin = createSettingsWindow();
+  if (process.env.ELECTRON_RENDERER_URL) {
+    settingsWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/settings/index.html`);
+  } else {
+    settingsWin.loadFile(join(__dirname, "../renderer/settings/index.html"));
   }
 
   // Launchers helpers
@@ -233,18 +242,27 @@ async function bootstrap() {
   let fallVy = 0;
   let prevState: string = controller.state;
 
+  // Adaptive tick — 걷기/낙하만 30fps, 나머지는 절전 모드
   let last = performance.now();
-  const loop = setInterval(() => {
+  let loopStopped = false;
+  function tickInterval(): number {
+    const s = controller.state;
+    if (s === "walk" || s === "fall" || s === "drag") return 33;  // ~30fps
+    if (s === "sleep") return 500;                                  // 절전
+    return 120;                                                     // idle/sit/happy 등
+  }
+  function tick() {
     if (!petWindowAlive()) return;
     const now = performance.now();
-    const dt = now - last; last = now;
+    // 큰 dt(오래 자다가 깨어난 첫 tick 등)는 시각 점프 방지 위해 50ms로 클램프
+    const dt = Math.min(50, now - last);
+    last = now;
 
     controller.tick(now);
     const b = win.getBounds();
     const d = displayContainingElectron(screen, { x: b.x, y: b.y });
     const groundYNow = groundY(d, petSize);
 
-    // fall 진입 감지 → 낙하 속도 리셋
     if (controller.state === "fall" && prevState !== "fall") fallVy = 0;
     prevState = controller.state;
 
@@ -253,7 +271,6 @@ async function bootstrap() {
       win.setBounds({ x: Math.round(walker.x), y: groundYNow, width: petSize, height: petSize });
       win.webContents.send("pet:facing", walker.direction);
     } else if (controller.state === "fall") {
-      // 중력 물리로 낙하. 착지하면 forceState("idle").
       fallVy += GRAVITY * (dt / 1000);
       const newY = b.y + fallVy * (dt / 1000);
       if (newY >= groundYNow) {
@@ -270,24 +287,70 @@ async function bootstrap() {
     ) {
       win.setBounds({ x: b.x, y: groundYNow, width: petSize, height: petSize });
     }
-  }, 33); // ~30fps
+  }
+  function scheduleLoop() {
+    if (loopStopped) return;
+    setTimeout(() => { tick(); scheduleLoop(); }, tickInterval());
+  }
+  scheduleLoop();
+  const loop = { stop: () => { loopStopped = true; } };
+
+  // ─── Settings 로드 및 Reactive 갱신 ───
+  const settingsPath = filePath("settings.json");
+  const isFirstRun = !existsSync(settingsPath);
+  let settings = { ...DEFAULT_SETTINGS, ...settingsStore.load() };
+  // 저장 (기본값 병합된 상태로)
+  settingsStore.save(settings);
+
+  function showHelpDialog() {
+    dialog.showMessageBox({
+      type: "info",
+      title: "뽁이 사용법",
+      message: "뽁이와 잘 지내는 법",
+      detail: [
+        "🐩 푸들 클릭 → 말풍선 메뉴 (📝 메모 · 🚀 바로가기 · 💤 재우기)",
+        "✋ 푸들 드래그 → 원하는 곳으로 이동 (다중 모니터 OK)",
+        "📂 파일/폴더를 푸들에 드롭 → 바로가기 자동 등록",
+        `⌨️  ${settings.shortcutQuickMemo.replace("CommandOrControl", "Ctrl")} → 빠른 메모`,
+        "",
+        "⚠️  메모/바로가기 창의 X 버튼은 창을 숨기기만 합니다.",
+        "    앱 종료는 반드시 트레이 아이콘 우클릭 → 종료.",
+        "",
+        `📁 데이터 위치: %APPDATA%\\BOKKI\\`
+      ].join("\n"),
+      buttons: ["확인"],
+      defaultId: 0
+    });
+  }
+
+  // 재사용 가능한 shortcut 재등록
+  let shortcutRegistered = false;
+  function registerShortcut(accel: string): boolean {
+    globalShortcut.unregisterAll();
+    const r = registerQuickMemo(accel, () => {
+      if (!memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
+      if (petWindowAlive()) {
+        win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
+      }
+    });
+    shortcutRegistered = r.ok;
+    if (!r.ok) tray?.displayBalloon?.({ title: "단축키 충돌", content: `${accel}: ${r.error}` });
+    return r.ok;
+  }
 
   // Create tray
-  const tray = createTray(win, () => clearInterval(loop), characterDir);
+  const tray = createTray(win, {
+    onQuit: () => loop.stop(),
+    onOpenSettings: () => { settingsWin.show(); settingsWin.focus(); },
+    onShowHelp: showHelpDialog
+  }, characterDir);
 
-  // Register global shortcut for quick memo
-  const settings = settingsStore.load();
-  const res = registerQuickMemo(settings.shortcutQuickMemo, () => {
-    if (!memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
-    if (petWindowAlive()) {
-      win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
-    }
-  });
-  if (!res.ok) tray.displayBalloon?.({ title: "단축키 충돌", content: `${settings.shortcutQuickMemo}: ${res.error}` });
+  registerShortcut(settings.shortcutQuickMemo);
 
-  // Fullscreen auto-hide polling
+  // Fullscreen auto-hide polling — settings.hideOnFullscreen 토글 반영
   let fullscreenInterval: NodeJS.Timeout | null = null;
-  if (DEFAULT_SETTINGS.hideOnFullscreen) {
+  function startFullscreenPolling() {
+    if (fullscreenInterval) return;
     fullscreenInterval = setInterval(() => {
       if (!petWindowAlive()) return;
       const primary = screen.getPrimaryDisplay();
@@ -297,6 +360,125 @@ async function bootstrap() {
       if (isFullscreen && win.isVisible()) win.hide();
       if (!isFullscreen && !win.isVisible()) win.show();
     }, 5000);
+  }
+  function stopFullscreenPolling() {
+    if (fullscreenInterval) { clearInterval(fullscreenInterval); fullscreenInterval = null; }
+  }
+  if (settings.hideOnFullscreen) startFullscreenPolling();
+
+  // Autostart 적용
+  function applyAutoStart(on: boolean) {
+    if (process.platform !== "win32") return;
+    app.setLoginItemSettings({ openAtLogin: on, path: process.execPath, args: [] });
+  }
+  applyAutoStart(settings.autoStart);
+
+  // Settings IPC
+  ipcMain.handle("settings:get", () => settings);
+  ipcMain.handle("settings:update", (_, patch: Partial<Settings>) => {
+    const prev = settings;
+    settings = { ...settings, ...patch };
+    let shortcutOk: boolean | undefined;
+    if (patch.shortcutQuickMemo && patch.shortcutQuickMemo !== prev.shortcutQuickMemo) {
+      shortcutOk = registerShortcut(patch.shortcutQuickMemo);
+      if (!shortcutOk) settings.shortcutQuickMemo = prev.shortcutQuickMemo; // 롤백
+    }
+    if (patch.hideOnFullscreen !== undefined && patch.hideOnFullscreen !== prev.hideOnFullscreen) {
+      if (patch.hideOnFullscreen) startFullscreenPolling(); else stopFullscreenPolling();
+    }
+    if (patch.autoStart !== undefined && patch.autoStart !== prev.autoStart) {
+      applyAutoStart(patch.autoStart);
+    }
+    if (patch.walkSpeedPxPerSec !== undefined) {
+      walker.speedPxPerSec = patch.walkSpeedPxPerSec;
+    }
+    if (patch.spriteScale !== undefined && patch.spriteScale !== prev.spriteScale) {
+      // 스프라이트 크기는 창 크기 바뀌므로 렌더러 reload가 가장 간단.
+      // (petSize는 클로저에 고정이라 완전 반영에는 재시작 필요 — 다음 세션부터 적용)
+      win.reload();
+      if (petWindowAlive()) {
+        win.webContents.send("pet:toast", { text: "다음 실행부터 적용돼요", ms: 2000 });
+      }
+    }
+    settingsStore.save(settings);
+    return { shortcutOk };
+  });
+
+  // Export / Import
+  ipcMain.handle("settings:exportMemos", async () => {
+    const r = await dialog.showSaveDialog(settingsWin, {
+      title: "메모 내보내기",
+      defaultPath: `bokki-memos-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }]
+    });
+    if (r.canceled || !r.filePath) return { ok: false };
+    try {
+      writeFileSync(r.filePath, JSON.stringify(memosStore.load(), null, 2), "utf8");
+      return { ok: true, path: r.filePath };
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? "저장 실패" };
+    }
+  });
+  ipcMain.handle("settings:importMemos", async () => {
+    const r = await dialog.showOpenDialog(settingsWin, {
+      title: "메모 가져오기",
+      filters: [{ name: "JSON", extensions: ["json"] }],
+      properties: ["openFile"]
+    });
+    if (r.canceled || !r.filePaths[0]) return { ok: false };
+    try {
+      const arr = JSON.parse(readFileSync(r.filePaths[0], "utf8")) as Memo[];
+      if (!Array.isArray(arr)) throw new Error("JSON 배열이 아님");
+      // 병합 (id 중복은 새 것으로 덮음)
+      const existing = memosStore.load();
+      const merged = [...existing.filter(m => !arr.some(x => x.id === m.id)), ...arr];
+      memosStore.save(merged);
+      return { ok: true, count: arr.length };
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? "파싱 실패" };
+    }
+  });
+  ipcMain.handle("settings:exportLaunchers", async () => {
+    const r = await dialog.showSaveDialog(settingsWin, {
+      title: "바로가기 내보내기",
+      defaultPath: `bokki-launchers-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }]
+    });
+    if (r.canceled || !r.filePath) return { ok: false };
+    try {
+      writeFileSync(r.filePath, JSON.stringify(launchersStore.load(), null, 2), "utf8");
+      return { ok: true, path: r.filePath };
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? "저장 실패" };
+    }
+  });
+  ipcMain.handle("settings:importLaunchers", async () => {
+    const r = await dialog.showOpenDialog(settingsWin, {
+      title: "바로가기 가져오기",
+      filters: [{ name: "JSON", extensions: ["json"] }],
+      properties: ["openFile"]
+    });
+    if (r.canceled || !r.filePaths[0]) return { ok: false };
+    try {
+      const arr = JSON.parse(readFileSync(r.filePaths[0], "utf8")) as Launcher[];
+      if (!Array.isArray(arr)) throw new Error("JSON 배열이 아님");
+      const existing = launchersStore.load();
+      const merged = [...existing.filter(l => !arr.some(x => x.id === l.id)), ...arr];
+      launchersStore.save(merged);
+      return { ok: true, count: arr.length };
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? "파싱 실패" };
+    }
+  });
+  ipcMain.on("settings:openDataFolder", () => {
+    shell.openPath(userDataRoot());
+  });
+  ipcMain.on("settings:showHelp", showHelpDialog);
+
+  // First-run: 도움말 자동 표시
+  if (isFirstRun) {
+    // 창 뜬 뒤 살짝 뒤에 표시
+    setTimeout(() => showHelpDialog(), 800);
   }
 
   // drag state — 커서 대비 창 좌상단 오프셋을 저장. 매 tick 마다 OS 커서 위치로
@@ -386,7 +568,7 @@ async function bootstrap() {
 
   app.on("before-quit", () => {
     isShuttingDown = true;
-    clearInterval(loop);
+    loop.stop();
     if (fullscreenInterval) clearInterval(fullscreenInterval);
     screen.removeListener("display-metrics-changed", onDisplayChange);
     screen.removeListener("display-removed", onDisplayChange);
