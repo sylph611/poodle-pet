@@ -4,6 +4,22 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-30
+
+### Added
+- **자동 업데이트** (electron-updater + GitHub Releases 연동)
+  - 시작 5초 후 자동 체크 (조용히)
+  - 새 버전 발견 시 백그라운드 다운로드 → 완료되면 "지금 재시작 / 나중에" 다이얼로그
+  - 트레이 메뉴 "업데이트 확인"에서 수동 체크 가능
+- README 스크린샷 그리드 + shields.io 배지 (release / platform / license / coffee)
+- `scripts/capture-screenshots.mjs`: Playwright Electron으로 각 창 자동 캡처
+
+### Changed
+- 트레이 메뉴에 "업데이트 확인" 항목 추가
+
+### Fixed
+- 런처 URL 추가 · 메모 편집: `window.prompt()` Electron 미지원 → 인라인 모달로 교체
+
 ## [0.2.0] — 2026-09-30
 
 배포 준비 라운드. 이름 변경 + 설정 창 + 사용성 개선.
@@ -62,6 +78,7 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.3.0
 [0.2.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.2.0
 [0.1.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.1.0

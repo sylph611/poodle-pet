@@ -7,6 +7,7 @@ export type TrayActions = {
   onOpenSettings: () => void;
   onShowHelp: () => void;
   onShowAbout: () => void;
+  onCheckUpdate: () => void;
 };
 
 function loadTrayIcon(characterDir: string): NativeImage {
@@ -63,6 +64,7 @@ export function createTray(
     },
     { label: "설정", click: () => actions.onOpenSettings() },
     { label: "도움말", click: () => actions.onShowHelp() },
+    { label: "업데이트 확인", click: () => actions.onCheckUpdate() },
     { label: "뽁이에 대해…", click: () => actions.onShowAbout() },
     { type: "separator" },
     {

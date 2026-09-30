@@ -1,4 +1,6 @@
 import { app, ipcMain, screen, BrowserWindow, globalShortcut, dialog, shell } from "electron";
+import electronUpdaterPkg from "electron-updater";
+const { autoUpdater } = electronUpdaterPkg;
 import { join } from "node:path";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -335,13 +337,70 @@ async function bootstrap() {
     return r.ok;
   }
 
+  // ─── Auto Update (electron-updater) ───
+  // packaged 앱에서만 동작. dev에서는 checkForUpdates가 조용히 실패.
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = false; // 사용자 confirm 필요
+
+  let updateCheckManual = false;
+  autoUpdater.on("update-available", (info) => {
+    if (updateCheckManual) {
+      tray?.displayBalloon?.({ title: "업데이트 발견", content: `v${info.version} 다운로드 중...` });
+    }
+  });
+  autoUpdater.on("update-not-available", () => {
+    if (updateCheckManual) {
+      tray?.displayBalloon?.({ title: "최신 버전", content: `현재 v${app.getVersion()}이 최신입니다.` });
+    }
+    updateCheckManual = false;
+  });
+  autoUpdater.on("update-downloaded", (info) => {
+    updateCheckManual = false;
+    dialog.showMessageBox({
+      type: "info",
+      title: "업데이트 준비 완료",
+      message: `새 버전 v${info.version} 다운로드 완료`,
+      detail: "지금 앱을 재시작하면 새 버전으로 실행됩니다.",
+      buttons: ["지금 재시작", "나중에"],
+      defaultId: 0,
+      cancelId: 1
+    }).then((r) => {
+      if (r.response === 0) autoUpdater.quitAndInstall();
+    });
+  });
+  autoUpdater.on("error", (err) => {
+    console.error("[updater]", err.message);
+    if (updateCheckManual) {
+      tray?.displayBalloon?.({ title: "업데이트 확인 실패", content: err.message || "네트워크 확인" });
+      updateCheckManual = false;
+    }
+  });
+
+  function checkForUpdates(manual: boolean) {
+    if (!app.isPackaged) {
+      if (manual) {
+        tray?.displayBalloon?.({ title: "개발 모드", content: "자동 업데이트는 패키지 빌드에서만 동작합니다." });
+      }
+      return;
+    }
+    updateCheckManual = manual;
+    autoUpdater.checkForUpdates().catch((e) => {
+      if (manual) tray?.displayBalloon?.({ title: "업데이트 확인 실패", content: e?.message ?? "네트워크 확인" });
+      updateCheckManual = false;
+    });
+  }
+
   // Create tray
   const tray = createTray(win, {
     onQuit: () => loop.stop(),
     onOpenSettings: () => { settingsWin.show(); settingsWin.focus(); },
     onShowHelp: showHelpDialog,
-    onShowAbout: showAboutDialog
+    onShowAbout: showAboutDialog,
+    onCheckUpdate: () => checkForUpdates(true)
   }, characterDir);
+
+  // 시작 5초 후 자동 체크 (조용히)
+  setTimeout(() => checkForUpdates(false), 5000);
 
   registerShortcut(settings.shortcutQuickMemo);
 

@@ -18,3 +18,8 @@ nsis:
   perMachine: false
   allowToChangeInstallationDirectory: true
   shortcutName: 뽁이
+# electron-updater가 latest.yml을 이 저장소의 Releases에서 조회
+publish:
+  provider: github
+  owner: sylph611
+  repo: poodle-pet
