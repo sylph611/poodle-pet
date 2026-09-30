@@ -28,6 +28,9 @@
 | 2026-09-30 | `864326a` | URL 추가·메모 수정 인라인 모달 (window.prompt Electron 미지원 fix) |
 | 2026-09-30 | `b201d77` | Playwright로 스크린샷 6장 자동 캡처 · README 배지·그리드 활성화 |
 | 2026-09-30 | `v0.2.0` | **GitHub Release 배포** — `BOKKI Setup 0.2.0.exe` + zip (github.com/sylph611/poodle-pet/releases/tag/v0.2.0) |
+| 2026-09-30 | `d6fcdfa` | 자동 업데이트 (electron-updater + GitHub Releases) 도입 |
+| 2026-09-30 | `v0.3.0` | **GitHub Release 배포** — 인스톨러 + zip + `latest.yml` (자동 업데이트 활성) |
+| 2026-09-30 | (docs) | 블로그 3편 시리즈 outline 정리 → `docs/blog/series-outline.md` |
 
 ---
 
