@@ -9,7 +9,10 @@ files:
 win:
   target:
     - nsis
+    - zip
   icon: characters/poodle/icon-256.png
+  # 코드 서명 안 함 — winCodeSign 다운로드/추출 스킵 (Windows 심볼릭 링크 권한 이슈 회피)
+  signAndEditExecutable: false
 nsis:
   oneClick: false
   perMachine: false
