@@ -19,6 +19,8 @@ import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
 import type { Memo, Launcher, Settings } from "../shared/types";
 import { PetController } from "./pet-controller";
+import { PomodoroController } from "./pomodoro-controller";
+import type { Phase } from "./pomodoro-controller";
 import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
 import { Store, runDailyBackup, settingsStore } from "./store";
@@ -289,6 +291,58 @@ async function bootstrap() {
   // 저장 (기본값 병합된 상태로)
   settingsStore.save(settings);
 
+  // ─── PomodoroController ───
+  const pomo = new PomodoroController({
+    focusMs: settings.pomodoroFocusMin * 60_000,
+    breakMs: settings.pomodoroBreakMin * 60_000
+  });
+
+  let suppressIdleToast = false;
+  function pomoStopManual() {
+    suppressIdleToast = true;
+    pomo.stop();
+    suppressIdleToast = false;
+  }
+
+  pomo.onPhaseChange((phase: Phase, remainingMs: number) => {
+    // 1) PetController 집중 잠금
+    if (phase === "focus") controller.setFocusLock(true);
+    else controller.setFocusLock(false);
+
+    // 2) 토스트 알림
+    if (phase === "break" && petWindowAlive()) {
+      win.webContents.send("pet:toast", { text: "집중 끝! 5분 쉬어요 🍵", ms: 2000 });
+    } else if (phase === "idle" && !suppressIdleToast && petWindowAlive()) {
+      win.webContents.send("pet:toast", { text: "다시 집중할까요? ☕", ms: 2000 });
+    }
+
+    // 3) 배지 IPC
+    if (phase === "idle") {
+      if (petWindowAlive()) win.webContents.send("pet:pomoHide");
+    } else {
+      if (petWindowAlive()) {
+        win.webContents.send("pet:pomoBadge", {
+          phase,
+          remainingSec: Math.ceil(remainingMs / 1000)
+        });
+      }
+    }
+  });
+
+  const pomoTickInterval = setInterval(() => {
+    if (isShuttingDown) return;
+    pomo.tick(performance.now());
+    if (pomo.phase !== "idle" && petWindowAlive()) {
+      win.webContents.send("pet:pomoBadge", {
+        phase: pomo.phase,
+        remainingSec: Math.ceil(pomo.remainingMs / 1000)
+      });
+    }
+  }, 1000);
+
+  // suppress unused-variable warning until Task 7 wires pomoStopManual via TrayActions
+  void pomoStopManual;
+
   function showInfoWindow(section: "help" | "about") {
     if (isShuttingDown) return;
     const w = ensureInfoWindow();
@@ -428,6 +482,12 @@ async function bootstrap() {
     }
     if (patch.walkSpeedPxPerSec !== undefined) {
       walker.speedPxPerSec = patch.walkSpeedPxPerSec;
+    }
+    if (patch.pomodoroFocusMin !== undefined || patch.pomodoroBreakMin !== undefined) {
+      pomo.updateDurations(
+        settings.pomodoroFocusMin * 60_000,
+        settings.pomodoroBreakMin * 60_000
+      );
     }
     if (patch.spriteScale !== undefined && patch.spriteScale !== prev.spriteScale) {
       // Hot swap: petSize 갱신 + 창 리사이즈 + walker 경계 갱신 + 렌더러에 새 크기 알림
@@ -620,6 +680,7 @@ async function bootstrap() {
     isShuttingDown = true;
     setShuttingDown(true);
     loop.stop();
+    clearInterval(pomoTickInterval);
     if (fullscreenInterval) clearInterval(fullscreenInterval);
     screen.removeListener("display-metrics-changed", onDisplayChange);
     screen.removeListener("display-removed", onDisplayChange);
