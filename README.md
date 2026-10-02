@@ -1,7 +1,7 @@
 # 뽁이 (BOKKI) 🐩
 
 Windows 바탕화면을 돌아다니는 갈색 픽셀아트 푸들 데스크톱 펫.
-메모와 바로가기 기능이 함께 딸려 있습니다.
+메모·바로가기·포모도로 타이머에 자동 업데이트까지.
 
 <p align="center">
   <img src="docs/media/pet-walk.gif" width="600" alt="뽁이가 걷는 모습" />
@@ -45,26 +45,28 @@ npm run dev
 
 ```powershell
 npm run pack
-# dist/BOKKI Setup 0.1.0.exe   (NSIS 인스톨러)
-# dist/BOKKI-0.1.0-win.zip     (포터블 zip)
+# dist/BOKKI-Setup-X.Y.Z.exe   (NSIS 인스톨러 — 자동 업데이트 지원)
+# dist/BOKKI-X.Y.Z-win.zip     (포터블 zip — 수동 교체)
 ```
 
 **SmartScreen 경고**: 코드 서명이 되어있지 않아 처음 실행 시 "Windows에서 PC를 보호했습니다" 경고가 나옵니다. **추가 정보 → 실행**을 눌러 진행하세요.
 
 ## 사용법
 
-- **트레이 아이콘 우클릭 → 종료** (창 X 버튼은 memo/launcher만 숨김)
-- **푸들 클릭** → 말풍선 (📝 메모 / 🚀 바로가기 / 💤 재우기)
+- **트레이 아이콘 클릭** → 숨기기·보이기 / 포모도로 시작·중지 / 설정 / 업데이트 확인 / 종료
+- **푸들 클릭** → 말풍선 (📝 메모 / 🚀 바로가기 / ⏱ 포모도로 / 💤 재우기)
 - **푸들 드래그** → 어디로든 옮기기 (다중 모니터 OK). 놓으면 중력으로 바닥 착지
 - **파일/폴더 드래그해서 푸들에게 드롭** → 바로가기로 자동 등록
 - **`Ctrl+Alt+M`** → 빠른 메모 창 열기
+- **포모도로** → 25/5분 기본. 집중 중에는 뽁이가 앉아 있고, 휴식 때 다시 돌아다님. 설정에서 조정
 
 ## 개발
 
-- `npm test` — 단위 테스트 (Vitest, 26개)
-- `npm run test:e2e` — 스모크 테스트 (Playwright Electron, 3개)
+- `npm test` — 단위 테스트 (Vitest, 44개)
+- `npm run test:e2e` — 스모크 테스트 (Playwright Electron, 5개)
 - `npm run build` — 타입 체크 + 번들 빌드
 - `npm run pack` — 설치파일 생성
+- `npm run measure:memory` — 시나리오별 메모리 측정 (v0.4.0부터)
 
 ## 스프라이트 교체
 
@@ -81,6 +83,7 @@ npm run pack
 
 ## 문서
 
-- 설계서: `docs/superpowers/specs/2026-09-29-poodle-pet-design.md`
-- 구현 계획: `docs/superpowers/plans/2026-09-29-poodle-pet.md`
+- 변경사항: [CHANGELOG.md](CHANGELOG.md)
+- 설계서: [`docs/superpowers/specs/`](docs/superpowers/specs/) (v1 · v0.4.0)
+- 구현 계획: [`docs/superpowers/plans/`](docs/superpowers/plans/) (v1 · v0.4.0)
 - 개발 저널 (블로그 소스): `docs/blog/dev-journal.md`
