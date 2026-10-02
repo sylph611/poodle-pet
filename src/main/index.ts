@@ -304,6 +304,10 @@ async function bootstrap() {
     suppressIdleToast = false;
   }
 
+  if (process.env.E2E_TEST) {
+    ipcMain.handle("_e2e:pomoStart", () => { pomo.start(); });
+  }
+
   pomo.onPhaseChange((phase: Phase, remainingMs: number) => {
     // 1) PetController 집중 잠금
     if (phase === "focus") controller.setFocusLock(true);

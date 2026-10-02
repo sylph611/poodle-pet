@@ -85,3 +85,60 @@ test("launcher URL add", async () => {
   expect(items[0].type).toBe("url");
   await closeApp(app);
 });
+
+async function findWindowBy(
+  app: ElectronApplication,
+  predicate: (w: Page) => boolean,
+  timeoutMs: number
+): Promise<Page | undefined> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const found = app.windows().find(predicate);
+    if (found) return found;
+    await waitMs(150);
+  }
+  return undefined;
+}
+
+test("memo window is lazy — created on open, destroyed on close", async () => {
+  const app = await launch();
+  const pet = await getPetWindow(app);
+
+  // 메모 창은 아직 없어야 함
+  const memoBefore = app.windows().find(w => w.url().includes("/memo/"));
+  expect(memoBefore).toBeUndefined();
+
+  // 메모 창 열기 (IPC로 bubble:choose "memo")
+  await pet.evaluate(() => {
+    (window as any).pet.chooseAction("memo");
+  });
+
+  // 메모 창이 생겼는지 waitFor
+  const memo = await findWindowBy(app, w => w.url().includes("memo"), 5000);
+  expect(memo).toBeTruthy();
+
+  // 메모 창 닫기
+  await memo!.close();
+  await waitMs(1000);
+
+  // destroy 됐는지 확인
+  const memoAfter = app.windows().find(w => w.url().includes("memo"));
+  expect(memoAfter).toBeUndefined();
+
+  await closeApp(app);
+});
+
+test("pomodoro start → focus badge visible", async () => {
+  const app = await launch();
+  const pet = await getPetWindow(app);
+
+  // 포모도로 시작 (E2E IPC 핸들러 사용)
+  await pet.evaluate(() => (window as any).__e2e.pomoStart());
+
+  // 배지가 .focus 클래스를 가져야 함
+  await pet.waitForSelector("#pomo-badge:not(.hidden).focus", { timeout: 5000 });
+  const badgeText = await pet.textContent("#pomo-badge");
+  expect(badgeText).toMatch(/\d+:\d{2}/);
+
+  await closeApp(app);
+});

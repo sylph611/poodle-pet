@@ -67,6 +67,12 @@ contextBridge.exposeInMainWorld("memos", memos);
 contextBridge.exposeInMainWorld("launchers", launchers);
 contextBridge.exposeInMainWorld("settings", settings);
 contextBridge.exposeInMainWorld("info", info);
+
+if (process.env.E2E_TEST) {
+  contextBridge.exposeInMainWorld("__e2e", {
+    pomoStart: () => ipcRenderer.invoke("_e2e:pomoStart")
+  });
+}
 export type PetApi = typeof pet;
 export type MemosApi = typeof memos;
 export type LaunchersApi = typeof launchers;
