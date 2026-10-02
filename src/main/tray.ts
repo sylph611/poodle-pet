@@ -1,6 +1,7 @@
 import { app, Tray, Menu, nativeImage, BrowserWindow, NativeImage } from "electron";
 import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
+import type { Phase } from "./pomodoro-controller";
 
 export type TrayActions = {
   onQuit: () => void;
@@ -8,6 +9,10 @@ export type TrayActions = {
   onShowHelp: () => void;
   onShowAbout: () => void;
   onCheckUpdate: () => void;
+  onPomoStart: () => void;
+  onPomoStop: () => void;
+  // Tray 메뉴 rebuild 시 최신 포모도로 상태를 알기 위한 getter (circular import 회피)
+  getPomoState: () => { phase: Phase; remainingMs: number };
 };
 
 function loadTrayIcon(characterDir: string): NativeImage {
@@ -50,6 +55,19 @@ function loadTrayIcon(characterDir: string): NativeImage {
   return cropped.resize({ width: 48, height: 48, quality: "best" });
 }
 
+function formatMMSS(remainingMs: number): string {
+  const total = Math.max(0, Math.floor(remainingMs / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function pomoLabel(phase: Phase, remainingMs: number): string {
+  if (phase === "idle") return "⏱ 포모도로 시작";
+  const kind = phase === "focus" ? "집중" : "휴식";
+  return `⏱ 포모도로 중지 (${kind} ${formatMMSS(remainingMs)})`;
+}
+
 export function createTray(
   pet: BrowserWindow,
   actions: TrayActions,
@@ -57,25 +75,42 @@ export function createTray(
 ): Tray {
   const icon = loadTrayIcon(characterDir);
   const tray = new Tray(icon);
-  const menu = Menu.buildFromTemplate([
-    {
-      label: "숨기기/보이기",
-      click: () => (pet.isVisible() ? pet.hide() : pet.show())
-    },
-    { label: "설정", click: () => actions.onOpenSettings() },
-    { label: "도움말", click: () => actions.onShowHelp() },
-    { label: "업데이트 확인", click: () => actions.onCheckUpdate() },
-    { label: "뽁이에 대해…", click: () => actions.onShowAbout() },
-    { type: "separator" },
-    {
-      label: "종료",
-      click: () => {
-        actions.onQuit();
-        app.quit();
-      }
-    }
-  ]);
   tray.setToolTip("뽁이");
-  tray.setContextMenu(menu);
+
+  function buildMenu(): Menu {
+    const { phase, remainingMs } = actions.getPomoState();
+    const remaining = remainingMs;
+    return Menu.buildFromTemplate([
+      { label: "숨기기/보이기", click: () => (pet.isVisible() ? pet.hide() : pet.show()) },
+      {
+        label: pomoLabel(phase, remaining),
+        click: () => {
+          if (phase === "idle") actions.onPomoStart();
+          else actions.onPomoStop();
+        }
+      },
+      { label: "설정", click: () => actions.onOpenSettings() },
+      { label: "도움말", click: () => actions.onShowHelp() },
+      { label: "업데이트 확인", click: () => actions.onCheckUpdate() },
+      { label: "뽁이에 대해…", click: () => actions.onShowAbout() },
+      { type: "separator" },
+      {
+        label: "종료",
+        click: () => { actions.onQuit(); app.quit(); }
+      }
+    ]);
+  }
+
+  // 좌/우 클릭 모두 rebuild해서 띄움
+  function openMenu() {
+    if (tray.isDestroyed()) return;
+    tray.popUpContextMenu(buildMenu());
+  }
+  tray.on("right-click", openMenu);
+  tray.on("click", openMenu);
+
+  // 초기 ContextMenu도 set (유저가 트레이에 호버 시 이름 표시 등)
+  tray.setContextMenu(buildMenu());
+
   return tray;
 }

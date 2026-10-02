@@ -340,9 +340,6 @@ async function bootstrap() {
     }
   }, 1000);
 
-  // suppress unused-variable warning until Task 7 wires pomoStopManual via TrayActions
-  void pomoStopManual;
-
   function showInfoWindow(section: "help" | "about") {
     if (isShuttingDown) return;
     const w = ensureInfoWindow();
@@ -430,7 +427,10 @@ async function bootstrap() {
     onOpenSettings: () => { const w = ensureSettingsWindow(); w.show(); w.focus(); },
     onShowHelp: showHelpDialog,
     onShowAbout: showAboutDialog,
-    onCheckUpdate: () => checkForUpdates(true)
+    onCheckUpdate: () => checkForUpdates(true),
+    onPomoStart: () => pomo.start(),
+    onPomoStop: () => pomoStopManual(),
+    getPomoState: () => ({ phase: pomo.phase, remainingMs: pomo.remainingMs })
   }, characterDir);
 
   // 시작 5초 후 자동 체크 (조용히)
