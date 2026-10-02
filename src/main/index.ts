@@ -6,10 +6,14 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createPetWindow } from "./pet-window";
 import { createBubbleWindow, bubbleSize } from "./bubble-window";
-import { createMemoWindow } from "./memo-window";
-import { createLauncherWindow } from "./launcher-window";
-import { createSettingsWindow } from "./settings-window";
-import { createInfoWindow } from "./info-window";
+import {
+  ensureMemoWindow,
+  ensureLauncherWindow,
+  ensureSettingsWindow,
+  ensureInfoWindow,
+  destroyAllRegistered,
+  setShuttingDown
+} from "./window-registry";
 import { classify, inferName, open as openLauncher, iconDataUrl } from "./launcher";
 import { loadManifest } from "../shared/manifest";
 import { DEFAULT_SETTINGS } from "../shared/types";
@@ -93,34 +97,6 @@ async function bootstrap() {
     bubble.loadURL(`${process.env.ELECTRON_RENDERER_URL}/bubble/index.html`);
   } else {
     bubble.loadFile(join(__dirname, "../renderer/bubble/index.html"));
-  }
-
-  const memoWin = createMemoWindow();
-  if (process.env.ELECTRON_RENDERER_URL) {
-    memoWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/memo/index.html`);
-  } else {
-    memoWin.loadFile(join(__dirname, "../renderer/memo/index.html"));
-  }
-
-  const launcherWin = createLauncherWindow();
-  if (process.env.ELECTRON_RENDERER_URL) {
-    launcherWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/launcher/index.html`);
-  } else {
-    launcherWin.loadFile(join(__dirname, "../renderer/launcher/index.html"));
-  }
-
-  const settingsWin = createSettingsWindow();
-  if (process.env.ELECTRON_RENDERER_URL) {
-    settingsWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/settings/index.html`);
-  } else {
-    settingsWin.loadFile(join(__dirname, "../renderer/settings/index.html"));
-  }
-
-  const infoWin = createInfoWindow();
-  if (process.env.ELECTRON_RENDERER_URL) {
-    infoWin.loadURL(`${process.env.ELECTRON_RENDERER_URL}/info/index.html`);
-  } else {
-    infoWin.loadFile(join(__dirname, "../renderer/info/index.html"));
   }
 
   // Launchers helpers
@@ -314,10 +290,11 @@ async function bootstrap() {
   settingsStore.save(settings);
 
   function showInfoWindow(section: "help" | "about") {
-    if (infoWin.isDestroyed()) return;
-    infoWin.show();
-    infoWin.focus();
-    infoWin.webContents.send("info:show", section);
+    if (isShuttingDown) return;
+    const w = ensureInfoWindow();
+    w.show();
+    w.focus();
+    w.webContents.send("info:show", section);
   }
   const showAboutDialog = () => showInfoWindow("about");
   const showHelpDialog = () => showInfoWindow("help");
@@ -327,7 +304,10 @@ async function bootstrap() {
   function registerShortcut(accel: string): boolean {
     globalShortcut.unregisterAll();
     const r = registerQuickMemo(accel, () => {
-      if (!memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
+      if (!isShuttingDown) {
+        const w = ensureMemoWindow();
+        w.show(); w.focus();
+      }
       if (petWindowAlive()) {
         win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
       }
@@ -393,7 +373,7 @@ async function bootstrap() {
   // Create tray
   const tray = createTray(win, {
     onQuit: () => loop.stop(),
-    onOpenSettings: () => { settingsWin.show(); settingsWin.focus(); },
+    onOpenSettings: () => { const w = ensureSettingsWindow(); w.show(); w.focus(); },
     onShowHelp: showHelpDialog,
     onShowAbout: showAboutDialog,
     onCheckUpdate: () => checkForUpdates(true)
@@ -472,7 +452,7 @@ async function bootstrap() {
 
   // Export / Import
   ipcMain.handle("settings:exportMemos", async () => {
-    const r = await dialog.showSaveDialog(settingsWin, {
+    const r = await dialog.showSaveDialog(ensureSettingsWindow(), {
       title: "메모 내보내기",
       defaultPath: `bokki-memos-${new Date().toISOString().slice(0, 10)}.json`,
       filters: [{ name: "JSON", extensions: ["json"] }]
@@ -486,7 +466,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:importMemos", async () => {
-    const r = await dialog.showOpenDialog(settingsWin, {
+    const r = await dialog.showOpenDialog(ensureSettingsWindow(), {
       title: "메모 가져오기",
       filters: [{ name: "JSON", extensions: ["json"] }],
       properties: ["openFile"]
@@ -505,7 +485,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:exportLaunchers", async () => {
-    const r = await dialog.showSaveDialog(settingsWin, {
+    const r = await dialog.showSaveDialog(ensureSettingsWindow(), {
       title: "바로가기 내보내기",
       defaultPath: `bokki-launchers-${new Date().toISOString().slice(0, 10)}.json`,
       filters: [{ name: "JSON", extensions: ["json"] }]
@@ -519,7 +499,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:importLaunchers", async () => {
-    const r = await dialog.showOpenDialog(settingsWin, {
+    const r = await dialog.showOpenDialog(ensureSettingsWindow(), {
       title: "바로가기 가져오기",
       filters: [{ name: "JSON", extensions: ["json"] }],
       properties: ["openFile"]
@@ -617,8 +597,8 @@ async function bootstrap() {
   ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
     if (isShuttingDown) return;
     if (!bubble.isDestroyed()) bubble.hide();
-    if (a === "memo" && !memoWin.isDestroyed()) { memoWin.show(); memoWin.focus(); }
-    if (a === "launcher" && !launcherWin.isDestroyed()) { launcherWin.show(); launcherWin.focus(); }
+    if (a === "memo") { const w = ensureMemoWindow(); w.show(); w.focus(); }
+    if (a === "launcher") { const w = ensureLauncherWindow(); w.show(); w.focus(); }
     if (a === "sleep") controller.forceState("sleep");
   });
 
@@ -638,12 +618,14 @@ async function bootstrap() {
 
   app.on("before-quit", () => {
     isShuttingDown = true;
+    setShuttingDown(true);
     loop.stop();
     if (fullscreenInterval) clearInterval(fullscreenInterval);
     screen.removeListener("display-metrics-changed", onDisplayChange);
     screen.removeListener("display-removed", onDisplayChange);
     // Force-destroy all windows so app.quit() isn't blocked by close event prevention
     BrowserWindow.getAllWindows().forEach(w => w.destroy());
+    destroyAllRegistered();
     currentPetWindow = null;
   });
 
