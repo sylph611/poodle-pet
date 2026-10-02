@@ -299,6 +299,8 @@ async function bootstrap() {
 
   let suppressIdleToast = false;
   function pomoStopManual() {
+    // suppressIdleToast는 pomo.stop() → onPhaseChange 콜백이 동기 완료됨에 의존
+    // (PomodoroController.transitionTo 동기). 콜백이 비동기화되면 Promise 체인으로 대체 필요.
     suppressIdleToast = true;
     pomo.stop();
     suppressIdleToast = false;
@@ -516,6 +518,7 @@ async function bootstrap() {
 
   // Export / Import
   ipcMain.handle("settings:exportMemos", async () => {
+    if (isShuttingDown) return { ok: false };
     const r = await dialog.showSaveDialog(ensureSettingsWindow(), {
       title: "메모 내보내기",
       defaultPath: `bokki-memos-${new Date().toISOString().slice(0, 10)}.json`,
@@ -530,6 +533,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:importMemos", async () => {
+    if (isShuttingDown) return { ok: false };
     const r = await dialog.showOpenDialog(ensureSettingsWindow(), {
       title: "메모 가져오기",
       filters: [{ name: "JSON", extensions: ["json"] }],
@@ -549,6 +553,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:exportLaunchers", async () => {
+    if (isShuttingDown) return { ok: false };
     const r = await dialog.showSaveDialog(ensureSettingsWindow(), {
       title: "바로가기 내보내기",
       defaultPath: `bokki-launchers-${new Date().toISOString().slice(0, 10)}.json`,
@@ -563,6 +568,7 @@ async function bootstrap() {
     }
   });
   ipcMain.handle("settings:importLaunchers", async () => {
+    if (isShuttingDown) return { ok: false };
     const r = await dialog.showOpenDialog(ensureSettingsWindow(), {
       title: "바로가기 가져오기",
       filters: [{ name: "JSON", extensions: ["json"] }],

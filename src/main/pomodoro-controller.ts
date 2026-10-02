@@ -27,6 +27,7 @@ export class PomodoroController {
 
   get remainingMs(): number {
     if (this._phase === "idle") return 0;
+    // clamp는 defensive — tick()의 자동 transition으로 현재 음수 경로 없음
     return Math.max(0, this.currentPhaseDurationMs - (this.lastNowMs - this.phaseStartMs));
   }
 
