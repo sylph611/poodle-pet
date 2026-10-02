@@ -79,3 +79,47 @@ describe("PetController — interactions", () => {
     expect(spy).toHaveBeenCalledWith("happy");
   });
 });
+
+describe("PetController — focus lock", () => {
+  it("setFocusLock(true) immediately enters sit", () => {
+    const c = make();
+    c.setFocusLock(true);
+    expect(c.state).toBe("sit");
+  });
+
+  it("happy → sit (not idle) while locked", () => {
+    const c = make();
+    c.setFocusLock(true);
+    c.notify("click"); // happy
+    expect(c.state).toBe("happy");
+    c.tick(1200); // happy 끝
+    expect(c.state).toBe("sit");
+  });
+
+  it("fall → sit (not idle) while locked", () => {
+    const c = make();
+    c.setFocusLock(true);
+    c.notify("dragStart");
+    c.notify("dragEnd"); // fall
+    c.tick(3000); // fall 안전 상한 종료
+    expect(c.state).toBe("sit");
+  });
+
+  it("idle rollout stays sit while locked", () => {
+    // sit 진입 후 tick 많이 돌려도 walk로 안 바뀜
+    const c = make({ rng: () => 0.1 }); // walk 선호 rng이지만
+    c.setFocusLock(true);
+    c.tick(10_000);
+    expect(c.state).toBe("sit");
+  });
+
+  it("setFocusLock(false) returns to idle behavior", () => {
+    const c = make();
+    c.setFocusLock(true);
+    c.setFocusLock(false);
+    // 다시 자유 — happy 뒤 idle 복귀 확인
+    c.notify("click");
+    c.tick(1200);
+    expect(c.state).toBe("idle");
+  });
+});

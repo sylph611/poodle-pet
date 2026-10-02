@@ -19,6 +19,7 @@ export class PetController {
   private stateEnteredAt = 0;
   private idleWaitMs = 0;
   private idleAccumMs = 0; // idle에서 누적 시간 (sleep 판정용)
+  private focusLock = false;
   private rng: () => number;
   private nowFn: () => number;
   private lastTickMs: number;
@@ -41,10 +42,10 @@ export class PetController {
 
     switch (this._state) {
       case "happy":
-        if (inState >= HAPPY_MS) this.enter("idle");
+        if (inState >= HAPPY_MS) this.enter(this.focusLock ? "sit" : "idle");
         break;
       case "fall":
-        if (inState >= FALL_MS) this.enter("idle");
+        if (inState >= FALL_MS) this.enter(this.focusLock ? "sit" : "idle");
         break;
       case "idle":
         this.idleAccumMs += dt;
@@ -70,7 +71,13 @@ export class PetController {
 
   forceState(s: PetState) { this.enter(s); }
 
+  setFocusLock(locked: boolean): void {
+    this.focusLock = locked;
+    if (locked) this.enter("sit");
+  }
+
   private rollIdleBranch() {
+    if (this.focusLock) { this.enter("sit"); return; }
     const r = this.rng();
     if (r < 0.5) this.enter("walk");
     else if (r < 0.8) this.enter("idle"); // 유지 = 재진입 (wait 재추첨)
