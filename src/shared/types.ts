@@ -20,6 +20,8 @@ export type Settings = {
   shortcutQuickMemo: string; // Electron accelerator string
   hideOnFullscreen: boolean;
   autoStart: boolean;        // Windows 로그인 시 자동 실행
+  pomodoroFocusMin: number;  // 15~60, 기본 25
+  pomodoroBreakMin: number;  // 3~15, 기본 5
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,7 +29,9 @@ export const DEFAULT_SETTINGS: Settings = {
   walkSpeedPxPerSec: 40,
   shortcutQuickMemo: "CommandOrControl+Alt+M",
   hideOnFullscreen: true,
-  autoStart: false
+  autoStart: false,
+  pomodoroFocusMin: 25,
+  pomodoroBreakMin: 5
 };
 
 export type PetState = "idle" | "walk" | "sit" | "sleep" | "drag" | "fall" | "happy";
