@@ -22,6 +22,7 @@
     "gen:tray": "node scripts/gen-tray-icon.mjs",
     "gen:screenshots": "node scripts/capture-screenshots.mjs",
     "gen:gif": "node scripts/gen-walk-gif.mjs",
+    "measure:memory": "node scripts/measure-memory.mjs",
     "pack": "electron-vite build && electron-builder --win"
   },
   "devDependencies": {
