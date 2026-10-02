@@ -7,3 +7,20 @@ canvas { image-rendering: pixelated; }
   opacity: 0; transition: opacity 0.2s; pointer-events: none;
 }
 #toast.show { opacity: 1; }
+#pomo-badge {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #FFFFFF;
+  border: 2px solid #D4A574;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font: 600 11px 'Consolas', monospace;
+  color: #8B4513;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#pomo-badge.focus { border-color: #C0392B; color: #C0392B; }
+#pomo-badge.break { border-color: #2E7D32; color: #2E7D32; }
+#pomo-badge.hidden { display: none; }

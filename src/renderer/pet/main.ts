@@ -118,3 +118,22 @@ document.body.addEventListener("drop", (e) => {
   }
   if (paths.length) window.pet.dropFiles(paths);
 });
+
+// Pomodoro badge handler
+const pomoBadge = document.getElementById("pomo-badge")!;
+
+function fmtMMSS(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+window.pet.onPomoBadge(({ phase, remainingSec }) => {
+  pomoBadge.textContent = fmtMMSS(remainingSec);
+  pomoBadge.classList.remove("hidden", "focus", "break");
+  pomoBadge.classList.add(phase);
+});
+
+window.pet.onPomoHide(() => {
+  pomoBadge.classList.add("hidden");
+});
