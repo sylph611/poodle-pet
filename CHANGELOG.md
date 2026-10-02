@@ -4,6 +4,17 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-03
+
+### Fixed
+- **트레이 메뉴 포모도로 상태 반영 안 되던 버그** — Windows에서 `setContextMenu`로 등록된 캐시 메뉴가 우클릭에 자동으로 뜨면서 동적 rebuild가 가려지던 문제. 캐시 등록을 제거하고 좌/우클릭 때 매번 fresh 메뉴를 띄우도록 수정.
+
+### Added
+- **뽁이 클릭 bubble에 ⏱ 포모도로 버튼** — 트레이 외에 bubble에서도 포모도로 토글 가능. 상태(idle/focus/break)에 따라 배경색과 툴팁이 바뀜.
+
+### Changed
+- 내부 정리: v0.4.0 deferred minors 4개 (export/import 핸들러 shutdown 가드, remainingMs clamp 의도 주석, suppressIdleToast 동기 의존 주석, unused import 제거).
+
 ## [0.4.0] — 2026-10-02
 
 ### Added
@@ -97,7 +108,8 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.1
 [0.4.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.0
 [0.3.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.3.0
 [0.2.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.2.0
