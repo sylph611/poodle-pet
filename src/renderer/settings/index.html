@@ -52,6 +52,25 @@
       </section>
 
       <section class="card">
+        <div class="section-title">⏱ 포모도로</div>
+        <div class="row">
+          <label>집중 시간</label>
+          <div class="slider-wrap">
+            <input type="range" id="pomo-focus" min="15" max="60" step="5" value="25" />
+            <span id="pomo-focus-val">25</span><span class="unit">분</span>
+          </div>
+        </div>
+        <div class="row">
+          <label>휴식 시간</label>
+          <div class="slider-wrap">
+            <input type="range" id="pomo-break" min="3" max="15" step="1" value="5" />
+            <span id="pomo-break-val">5</span><span class="unit">분</span>
+          </div>
+        </div>
+        <div class="hint">현재 세션은 유지, 다음 세션부터 적용돼요.</div>
+      </section>
+
+      <section class="card">
         <div class="section-title">데이터</div>
         <div class="btn-grid">
           <button class="add-btn" id="export-memos">📝 메모 내보내기</button>

@@ -78,6 +78,31 @@ async function main() {
     await window.settings.update({ walkSpeedPxPerSec: Number(speed.value) });
   });
 
+  // 포모도로
+  const pomoFocus = document.getElementById("pomo-focus") as HTMLInputElement;
+  const pomoFocusVal = document.getElementById("pomo-focus-val")!;
+  const pomoBreak = document.getElementById("pomo-break") as HTMLInputElement;
+  const pomoBreakVal = document.getElementById("pomo-break-val")!;
+
+  pomoFocus.value = String(s.pomodoroFocusMin);
+  pomoFocusVal.textContent = String(s.pomodoroFocusMin);
+  pomoBreak.value = String(s.pomodoroBreakMin);
+  pomoBreakVal.textContent = String(s.pomodoroBreakMin);
+
+  pomoFocus.addEventListener("input", () => {
+    pomoFocusVal.textContent = pomoFocus.value;
+  });
+  pomoFocus.addEventListener("change", async () => {
+    await window.settings.update({ pomodoroFocusMin: Number(pomoFocus.value) });
+  });
+
+  pomoBreak.addEventListener("input", () => {
+    pomoBreakVal.textContent = pomoBreak.value;
+  });
+  pomoBreak.addEventListener("change", async () => {
+    await window.settings.update({ pomodoroBreakMin: Number(pomoBreak.value) });
+  });
+
   // 단축키
   const shortcutEl = document.getElementById("shortcut-display")!;
   const shortcutBtn = document.getElementById("shortcut-change") as HTMLButtonElement;
