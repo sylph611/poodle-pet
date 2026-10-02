@@ -109,8 +109,8 @@ export function createTray(
   tray.on("right-click", openMenu);
   tray.on("click", openMenu);
 
-  // 초기 ContextMenu도 set (유저가 트레이에 호버 시 이름 표시 등)
-  tray.setContextMenu(buildMenu());
+  // setContextMenu를 쓰면 Windows OS가 캐시된 메뉴를 우클릭에 자동 띄워 동적 rebuild가 가려짐.
+  // 대신 right-click/click 리스너에서 매번 buildMenu()로 새 메뉴를 띄움.
 
   return tray;
 }
