@@ -4,6 +4,25 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-02
+
+### Added
+- **포모도로 타이머** — 25분 집중 / 5분 휴식 기본값
+  - 집중 중 뽁이는 sit 자세 고정 (focus lock)
+  - 휴식 중 뽁이는 평소대로 움직임
+  - 뽁이 머리 위 작은 타이머 배지 (집중: 빨강, 휴식: 초록)
+  - 트레이 "⏱ 포모도로 시작/중지 (XX:XX)" 동적 메뉴
+  - 세션 전환 시 뽁이 토스트 알림 ("집중 끝! 5분 쉬어요 🍵")
+  - 설정에서 집중 15~60분, 휴식 3~15분 조정 가능
+- **메모리 측정 스크립트** — `npm run measure:memory`
+
+### Changed
+- **메모리 다이어트** — memo·launcher·settings·info 4개 창을 lazy 생성
+  - 상시 메모리 ~757 MB → ~520 MB (-31%)
+  - 창 처음 열 때 300~500ms 로딩 (수용 가능)
+  - 창 닫기(X 버튼) 동작 변경: hide → destroy (데이터는 Store에 영속)
+- 트레이 메뉴 열릴 때마다 동적 rebuild (포모도로 상태 반영)
+
 ## [0.3.0] — 2026-09-30
 
 ### Added
@@ -78,7 +97,8 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.0
 [0.3.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.3.0
 [0.2.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.2.0
 [0.1.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.1.0
