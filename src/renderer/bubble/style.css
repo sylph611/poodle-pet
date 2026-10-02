@@ -54,3 +54,7 @@ button:hover {
   transform: scale(1.1);
 }
 button:active { transform: scale(0.95); }
+
+/* 포모도로 상태 표시 */
+button[data-a="pomo"].focus { background: #FFD6D6; }
+button[data-a="pomo"].break { background: #D6F3D6; }

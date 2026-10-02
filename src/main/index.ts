@@ -662,13 +662,18 @@ async function bootstrap() {
     }
     positionBubbleAbovePet();
     bubble.show(); // focus를 잡아서 외부 클릭 시 blur → hide
+    bubble.webContents.send("bubble:pomoState", { phase: pomo.phase, remainingMs: pomo.remainingMs });
   });
 
-  ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "sleep") => {
+  ipcMain.on("bubble:choose", (_, a: "memo" | "launcher" | "pomo" | "sleep") => {
     if (isShuttingDown) return;
     if (!bubble.isDestroyed()) bubble.hide();
     if (a === "memo") { const w = ensureMemoWindow(); w.show(); w.focus(); }
     if (a === "launcher") { const w = ensureLauncherWindow(); w.show(); w.focus(); }
+    if (a === "pomo") {
+      if (pomo.phase === "idle") pomo.start();
+      else pomoStopManual();
+    }
     if (a === "sleep") controller.forceState("sleep");
   });
 
