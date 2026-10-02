@@ -12,6 +12,5 @@ export function createMemoWindow(): BrowserWindow {
     }
   });
   win.setMenu(null);
-  win.on("close", (e) => { e.preventDefault(); win.hide(); });
   return win;
 }
