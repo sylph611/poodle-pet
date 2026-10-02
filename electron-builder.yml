@@ -18,6 +18,9 @@ nsis:
   perMachine: false
   allowToChangeInstallationDirectory: true
   shortcutName: 뽁이
+  # artifactName을 하이픈으로 고정 — latest.yml path와 일치 (수동 Release 업로드 시
+  # GitHub이 공백을 dot으로 변환해 404 유발하는 문제 회피)
+  artifactName: ${productName}-Setup-${version}.${ext}
 # electron-updater가 latest.yml을 이 저장소의 Releases에서 조회
 publish:
   provider: github
