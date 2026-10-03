@@ -23,9 +23,12 @@ import { PomodoroController } from "./pomodoro-controller";
 import type { Phase } from "./pomodoro-controller";
 import { WalkDriver, displayContainingElectron, groundY, recoverPosition } from "./screen-utils";
 import { createTray } from "./tray";
-import { Store, runDailyBackup, settingsStore } from "./store";
-import { registerQuickMemo } from "./shortcuts";
+import { Store, runDailyBackup, settingsStore, ClipboardHistoryStore } from "./store";
+import { registerPalette } from "./shortcuts";
 import { userDataRoot, filePath } from "./paths";
+import { createPaletteWindow, positionPaletteAtCursor } from "./palette-window";
+import { ClipboardWatcher } from "./clipboard-watcher";
+import { clipboard as electronClipboard } from "electron";
 
 const characterDir = join(__dirname, "../../characters/poodle");
 
@@ -99,6 +102,25 @@ async function bootstrap() {
     bubble.loadURL(`${process.env.ELECTRON_RENDERER_URL}/bubble/index.html`);
   } else {
     bubble.loadFile(join(__dirname, "../renderer/bubble/index.html"));
+  }
+
+  // ─── 팔레트 창 (lazy) ───
+  let paletteWin: BrowserWindow | null = null;
+  function ensurePaletteWindow(): BrowserWindow {
+    if (isShuttingDown) throw new Error("cannot create palette during shutdown");
+    if (paletteWin && !paletteWin.isDestroyed()) return paletteWin;
+    const win = createPaletteWindow();
+    if (process.env.ELECTRON_RENDERER_URL) {
+      win.loadURL(`${process.env.ELECTRON_RENDERER_URL}/palette/index.html`);
+    } else {
+      win.loadFile(join(__dirname, "../renderer/palette/index.html"));
+    }
+    win.on("blur", () => {
+      if (!win.isDestroyed() && win.isVisible()) win.hide();
+    });
+    win.on("closed", () => { paletteWin = null; });
+    paletteWin = win;
+    return win;
   }
 
   // Launchers helpers
@@ -291,6 +313,13 @@ async function bootstrap() {
   // 저장 (기본값 병합된 상태로)
   settingsStore.save(settings);
 
+  // ─── ClipboardStore + Watcher ───
+  const clipboardStore = new ClipboardHistoryStore(() => settings.clipboardMaxEntries);
+  const clipboardWatcher = new ClipboardWatcher(clipboardStore, {
+    readText: () => electronClipboard.readText()
+  });
+  if (settings.clipboardCaptureEnabled) clipboardWatcher.start();
+
   // ─── PomodoroController ───
   const pomo = new PomodoroController({
     focusMs: settings.pomodoroFocusMin * 60_000,
@@ -360,18 +389,17 @@ async function bootstrap() {
   let shortcutRegistered = false;
   function registerShortcut(accel: string): boolean {
     globalShortcut.unregisterAll();
-    const r = registerQuickMemo(accel, () => {
-      if (!isShuttingDown) {
-        const w = ensureMemoWindow();
-        w.show(); w.focus();
-      }
-      if (petWindowAlive()) {
-        win.webContents.send("pet:toast", { text: "빠른 메모 열었어요!", ms: 1200 });
-      }
+    const ok = registerPalette(accel, () => {
+      if (isShuttingDown) return;
+      const pw = ensurePaletteWindow();
+      positionPaletteAtCursor(pw);
+      pw.show();
+      pw.focus();
+      pw.webContents.send("palette:reset");
     });
-    shortcutRegistered = r.ok;
-    if (!r.ok) tray?.displayBalloon?.({ title: "단축키 충돌", content: `${accel}: ${r.error}` });
-    return r.ok;
+    shortcutRegistered = ok;
+    if (!ok) tray?.displayBalloon?.({ title: "단축키 충돌", content: `${accel}: 등록 실패` });
+    return ok;
   }
 
   // ─── Auto Update (electron-updater) ───
@@ -494,6 +522,13 @@ async function bootstrap() {
         settings.pomodoroFocusMin * 60_000,
         settings.pomodoroBreakMin * 60_000
       );
+    }
+    if ("clipboardCaptureEnabled" in patch) {
+      if (patch.clipboardCaptureEnabled) {
+        clipboardWatcher.start();
+      } else {
+        clipboardWatcher.stop();
+      }
     }
     if (patch.spriteScale !== undefined && patch.spriteScale !== prev.spriteScale) {
       // Hot swap: petSize 갱신 + 창 리사이즈 + walker 경계 갱신 + 렌더러에 새 크기 알림
@@ -691,12 +726,105 @@ async function bootstrap() {
     }, 100);
   });
 
+  // ─── 팔레트 IPC ───
+  ipcMain.handle("palette:search", (_, query: string) => {
+    const q = (query ?? "").toLowerCase().trim();
+    const memos = memosStore.load();
+    const clips = clipboardStore.list();
+    const launchers = sortLaunchers(launchersStore.load());
+
+    const matchText = (text: string) => q === "" || text.toLowerCase().includes(q);
+
+    const pinnedMemos = memos.filter(m => m.pinned && matchText(m.text)).slice(0, 10);
+    const normalMemos = memos.filter(m => !m.pinned && matchText(m.text)).slice(0, 10);
+    const matchedClips = clips.filter(c => matchText(c.text)).slice(0, 10);
+    const matchedLaunchers = launchers.filter(l => matchText(l.name) || matchText(l.target)).slice(0, 10);
+
+    const items: Array<{ kind: "memo" | "snippet" | "clipboard" | "launcher"; id: string; text: string; meta?: string }> = [];
+    for (const m of pinnedMemos)      items.push({ kind: "snippet",   id: m.id, text: m.text.slice(0, 120) });
+    for (const c of matchedClips)     items.push({ kind: "clipboard", id: c.id, text: c.text.slice(0, 120), meta: timeago(c.copiedAt) });
+    for (const m of normalMemos)      items.push({ kind: "memo",      id: m.id, text: m.text.slice(0, 120) });
+    for (const l of matchedLaunchers) items.push({ kind: "launcher",  id: l.id, text: l.name });
+
+    return items.slice(0, 40);
+  });
+
+  function timeago(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const s = Math.round(diff / 1000);
+    if (s < 60) return `${s}초 전`;
+    const m = Math.round(s / 60);
+    if (m < 60) return `${m}분 전`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h}시간 전`;
+    const d = Math.round(h / 24);
+    return `${d}일 전`;
+  }
+
+  ipcMain.handle("palette:select", async (_, item: { kind: string; id: string; editMode: boolean }) => {
+    if (item.kind === "launcher") {
+      const l = launchersStore.load().find(x => x.id === item.id);
+      if (!l) return;
+      await openLauncher(l);
+      return;
+    }
+    let text: string | null = null;
+    if (item.kind === "memo" || item.kind === "snippet") {
+      const m = memosStore.load().find(x => x.id === item.id);
+      text = m?.text ?? null;
+      if (item.editMode && m) {
+        const w = ensureMemoWindow();
+        w.show();
+        w.focus();
+        return;
+      }
+    } else if (item.kind === "clipboard") {
+      const c = clipboardStore.list().find(x => x.id === item.id);
+      text = c?.text ?? null;
+    }
+    if (text != null) {
+      electronClipboard.writeText(text);
+      if (petWindowAlive()) win.webContents.send("pet:toast", { text: "복사됨!", ms: 1200 });
+    }
+  });
+
+  ipcMain.handle("palette:createMemo", async (_, text: string) => {
+    const now = new Date().toISOString();
+    const m: Memo = { id: randomUUID(), text, pinned: false, createdAt: now, updatedAt: now };
+    const arr = memosStore.load(); arr.push(m); memosStore.save(arr);
+    if (petWindowAlive()) win.webContents.send("pet:toast", { text: "기억했어요!", ms: 1200 });
+  });
+
+  ipcMain.handle("palette:openMemoWindow", () => {
+    if (isShuttingDown) return;
+    const w = ensureMemoWindow();
+    w.show();
+    w.focus();
+  });
+
+  ipcMain.on("palette:close", () => {
+    if (paletteWin && !paletteWin.isDestroyed()) paletteWin.hide();
+  });
+
+  // ─── 클립보드 IPC ───
+  ipcMain.handle("clipboard:togglePaused", () => {
+    clipboardWatcher.setPaused(!clipboardWatcher.isPaused());
+    return clipboardWatcher.isPaused();
+  });
+
+  ipcMain.handle("clipboard:isPaused", () => clipboardWatcher.isPaused());
+
+  ipcMain.handle("clipboard:clear", () => {
+    clipboardStore.clear();
+  });
+
   app.on("before-quit", () => {
     isShuttingDown = true;
     setShuttingDown(true);
     loop.stop();
     clearInterval(pomoTickInterval);
     if (fullscreenInterval) clearInterval(fullscreenInterval);
+    clipboardWatcher.stop();
     screen.removeListener("display-metrics-changed", onDisplayChange);
     screen.removeListener("display-removed", onDisplayChange);
     // Force-destroy all windows so app.quit() isn't blocked by close event prevention
