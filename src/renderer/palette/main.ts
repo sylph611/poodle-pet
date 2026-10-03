@@ -226,12 +226,6 @@ q.addEventListener("keydown", (e) => {
     e.preventDefault();
     if (e.ctrlKey) {
       createMemoFromInput();
-    } else if (e.shiftKey) {
-      if (items.length === 0) {
-        createMemoFromInput();
-      } else {
-        activate(activeIdx, true);
-      }
     } else {
       activate(activeIdx, false);
     }
