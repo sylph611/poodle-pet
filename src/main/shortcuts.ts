@@ -1,10 +1,15 @@
 import { globalShortcut } from "electron";
 
-export function registerQuickMemo(accelerator: string, onFire: () => void): { ok: boolean; error?: string } {
+/** 단축키 등록. accelerator가 이미 쓰이면 false 반환. */
+export function registerPalette(accelerator: string, onInvoke: () => void): boolean {
   try {
-    const ok = globalShortcut.register(accelerator, onFire);
-    return ok ? { ok: true } : { ok: false, error: "이미 사용 중" };
-  } catch (e: any) {
-    return { ok: false, error: e?.message ?? "실패" };
+    const ok = globalShortcut.register(accelerator, onInvoke);
+    return ok;
+  } catch {
+    return false;
   }
+}
+
+export function unregisterAll(): void {
+  globalShortcut.unregisterAll();
 }
