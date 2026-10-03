@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>팔레트 · 뽁이</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <div class="palette">
+      <div class="search-row">
+        <span class="search-icon">🔍</span>
+        <input id="q" type="text" placeholder="검색 또는 명령어…" autocomplete="off" spellcheck="false" />
+      </div>
+      <ul id="results"></ul>
+      <div class="hint">
+        ↑↓ 이동 · Enter 복사·실행 · Shift+Enter 편집·새 메모 · Esc 닫기
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

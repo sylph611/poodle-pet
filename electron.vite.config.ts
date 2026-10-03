@@ -24,7 +24,8 @@ export default defineConfig({
           memo: resolve(__dirname, "src/renderer/memo/index.html"),
           launcher: resolve(__dirname, "src/renderer/launcher/index.html"),
           settings: resolve(__dirname, "src/renderer/settings/index.html"),
-          info: resolve(__dirname, "src/renderer/info/index.html")
+          info: resolve(__dirname, "src/renderer/info/index.html"),
+          palette: resolve(__dirname, "src/renderer/palette/index.html")
         }
       }
     }
