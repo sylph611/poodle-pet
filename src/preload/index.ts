@@ -15,8 +15,6 @@ const pet = {
     ipcRenderer.on("pet:pomoBadge", (_, p) => cb(p)),
   onPomoHide: (cb: () => void) =>
     ipcRenderer.on("pet:pomoHide", () => cb()),
-  onBubblePomoState: (cb: (p: { phase: "idle" | "focus" | "break"; remainingMs: number }) => void) =>
-    ipcRenderer.on("bubble:pomoState", (_, p) => cb(p)),
   action: (kind: "click" | "dragStart" | "dragEnd") => ipcRenderer.send("pet:action", kind),
   dragMove: (delta: { dx: number; dy: number }) => ipcRenderer.send("pet:dragMove", delta),
   openBubble: (anchor: { x: number; y: number }) => ipcRenderer.send("bubble:open", anchor),
