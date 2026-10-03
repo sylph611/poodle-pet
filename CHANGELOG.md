@@ -18,6 +18,8 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **스니펫 = 핀 메모** — 자주 쓰는 메모를 핀 꽂으면 팔레트에서 📎 아이콘으로 노출
 - **설정 창 📋 클립보드 섹션** — 캡처 토글 + 보관 수량 슬라이더
 
+- **팔레트 우클릭/⋯ 컨텍스트 메뉴** — 아이템별 액션 (스니펫 꽂기·편집·삭제·클립보드→메모 저장 등)
+
 ### Changed
 - **단축키 `Ctrl+Alt+M`** 역할 변경: 빠른 메모 → 팔레트 소환
   - 기존 멘탈 유지: 열자마자 Shift+Enter(빈 상태) 또는 Ctrl+Enter(입력 후)로 메모 작성 가능

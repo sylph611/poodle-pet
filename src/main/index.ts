@@ -808,6 +808,33 @@ async function bootstrap() {
     w.focus();
   });
 
+  ipcMain.handle("palette:togglePin", (_, memoId: string) => {
+    const arr = memosStore.load();
+    const idx = arr.findIndex(x => x.id === memoId);
+    if (idx < 0) return;
+    arr[idx] = { ...arr[idx], pinned: !arr[idx].pinned, updatedAt: new Date().toISOString() };
+    memosStore.save(arr);
+  });
+
+  ipcMain.handle("palette:deleteItem", (_, { kind, id }: { kind: "memo" | "snippet" | "clipboard" | "launcher"; id: string }) => {
+    if (kind === "memo" || kind === "snippet") {
+      memosStore.save(memosStore.load().filter(x => x.id !== id));
+    } else if (kind === "clipboard") {
+      clipboardStore.deleteEntry(id);
+    } else if (kind === "launcher") {
+      launchersStore.save(launchersStore.load().filter(x => x.id !== id));
+    }
+  });
+
+  ipcMain.handle("palette:saveClipAsMemo", (_, { clipId, pinned }: { clipId: string; pinned: boolean }) => {
+    const clip = clipboardStore.list().find(x => x.id === clipId);
+    if (!clip) return;
+    const now = new Date().toISOString();
+    const m: Memo = { id: randomUUID(), text: clip.text, pinned, createdAt: now, updatedAt: now };
+    const arr = memosStore.load(); arr.push(m); memosStore.save(arr);
+    if (petWindowAlive()) win.webContents.send("pet:toast", { text: "기억했어요!", ms: 1200 });
+  });
+
   ipcMain.on("palette:close", () => {
     if (paletteWin && !paletteWin.isDestroyed()) paletteWin.hide();
   });

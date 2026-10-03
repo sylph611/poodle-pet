@@ -76,7 +76,13 @@ const palette = {
     ipcRenderer.invoke("palette:createMemo", text) as Promise<void>,
   openMemoWindow: () => ipcRenderer.invoke("palette:openMemoWindow") as Promise<void>,
   close: () => ipcRenderer.send("palette:close"),
-  onReset: (cb: () => void) => ipcRenderer.on("palette:reset", () => cb())
+  onReset: (cb: () => void) => ipcRenderer.on("palette:reset", () => cb()),
+  togglePin: (memoId: string) =>
+    ipcRenderer.invoke("palette:togglePin", memoId) as Promise<void>,
+  deleteItem: (kind: "memo" | "snippet" | "clipboard" | "launcher", id: string) =>
+    ipcRenderer.invoke("palette:deleteItem", { kind, id }) as Promise<void>,
+  saveClipAsMemo: (clipId: string, pinned: boolean) =>
+    ipcRenderer.invoke("palette:saveClipAsMemo", { clipId, pinned }) as Promise<void>
 };
 
 const clipboard = {

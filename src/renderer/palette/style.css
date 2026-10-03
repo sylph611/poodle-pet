@@ -93,3 +93,53 @@ html, body {
   color: #B88968;
   font-size: 13px;
 }
+
+.more-btn {
+  flex-shrink: 0;
+  margin-left: 6px;
+  padding: 0 4px;
+  font-size: 14px;
+  color: #8B4513;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+#results li:hover .more-btn,
+#results li.active .more-btn {
+  opacity: 0.7;
+}
+.more-btn:hover {
+  opacity: 1 !important;
+}
+
+.context-menu {
+  position: fixed;
+  background: #FFFFFF;
+  border: 1px solid #D4A574;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(139, 69, 19, 0.2);
+  padding: 4px 0;
+  z-index: 9999;
+  min-width: 160px;
+  font-size: 13px;
+}
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3E2A1A;
+  white-space: nowrap;
+}
+.context-menu-item:hover {
+  background: #FFF8F0;
+}
+.context-menu-item.danger {
+  color: #c0392b;
+}
