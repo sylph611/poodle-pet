@@ -103,6 +103,26 @@ async function main() {
     await window.settings.update({ pomodoroBreakMin: Number(pomoBreak.value) });
   });
 
+  // 클립보드
+  const clipEnabled = document.getElementById("clip-enabled") as HTMLInputElement;
+  const clipMax = document.getElementById("clip-max") as HTMLInputElement;
+  const clipMaxVal = document.getElementById("clip-max-val")!;
+
+  clipEnabled.checked = s.clipboardCaptureEnabled;
+  clipMax.value = String(s.clipboardMaxEntries);
+  clipMaxVal.textContent = String(s.clipboardMaxEntries);
+
+  clipEnabled.addEventListener("change", async () => {
+    await window.settings.update({ clipboardCaptureEnabled: clipEnabled.checked });
+  });
+
+  clipMax.addEventListener("input", () => {
+    clipMaxVal.textContent = clipMax.value;
+  });
+  clipMax.addEventListener("change", async () => {
+    await window.settings.update({ clipboardMaxEntries: Number(clipMax.value) });
+  });
+
   // 단축키
   const shortcutEl = document.getElementById("shortcut-display")!;
   const shortcutBtn = document.getElementById("shortcut-change") as HTMLButtonElement;

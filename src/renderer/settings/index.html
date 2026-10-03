@@ -71,6 +71,22 @@
       </section>
 
       <section class="card">
+        <div class="section-title">📋 클립보드</div>
+        <div class="row toggle-row">
+          <label for="clip-enabled">캡처 활성화</label>
+          <input type="checkbox" id="clip-enabled" />
+        </div>
+        <div class="row">
+          <label>보관 수량</label>
+          <div class="slider-wrap">
+            <input type="range" id="clip-max" min="20" max="200" step="10" value="50" />
+            <span id="clip-max-val">50</span><span class="unit">개</span>
+          </div>
+        </div>
+        <div class="hint">민감한 작업 중엔 트레이에서 "📋 클립보드 캡처 일시정지" 체크하세요.</div>
+      </section>
+
+      <section class="card">
         <div class="section-title">데이터</div>
         <div class="btn-grid">
           <button class="add-btn" id="export-memos">📝 메모 내보내기</button>
