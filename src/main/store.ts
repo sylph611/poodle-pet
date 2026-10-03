@@ -1,6 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, rmSync, cpSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { randomUUID } from "node:crypto";
 import { filePath, backupDir } from "./paths";
+import type { ClipboardEntry } from "../shared/types";
 
 export class Store<T> {
   constructor(private name: string, private defaults: T) {}
@@ -56,3 +58,46 @@ import { DEFAULT_SETTINGS } from "../shared/types";
 export const memosStore = new Store<Memo[]>("memos.json", []);
 export const launchersStore = new Store<Launcher[]>("launchers.json", []);
 export const settingsStore = new Store<Settings>("settings.json", DEFAULT_SETTINGS);
+
+export class ClipboardHistoryStore {
+  private readonly inner: Store<ClipboardEntry[]>;
+
+  constructor(private readonly getMaxEntries: () => number) {
+    this.inner = new Store<ClipboardEntry[]>("clipboard.json", []);
+  }
+
+  list(): ClipboardEntry[] {
+    return this.inner.load();
+  }
+
+  addEntry(text: string): ClipboardEntry {
+    const entry: ClipboardEntry = {
+      id: randomUUID(),
+      text,
+      copiedAt: new Date().toISOString()
+    };
+    const max = Math.max(1, this.getMaxEntries());
+    const next = [entry, ...this.inner.load()].slice(0, max);
+    this.inner.save(next);
+    return entry;
+  }
+
+  moveToFront(text: string): boolean {
+    const arr = this.inner.load();
+    const idx = arr.findIndex(e => e.text === text);
+    if (idx < 0) return false;
+    const [found] = arr.splice(idx, 1);
+    found.copiedAt = new Date().toISOString();
+    arr.unshift(found);
+    this.inner.save(arr);
+    return true;
+  }
+
+  deleteEntry(id: string): void {
+    this.inner.save(this.inner.load().filter(e => e.id !== id));
+  }
+
+  clear(): void {
+    this.inner.save([]);
+  }
+}

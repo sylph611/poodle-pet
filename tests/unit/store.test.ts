@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setUserDataRootForTest } from "../../src/main/paths";
-import { Store, runDailyBackup } from "../../src/main/store";
+import { Store, runDailyBackup, ClipboardHistoryStore } from "../../src/main/store";
 
 let tmp: string;
 
@@ -62,5 +62,74 @@ describe("Store", () => {
     writeFileSync(marker, "x");
     runDailyBackup(["memos.json"]); // 재실행
     expect(existsSync(marker)).toBe(true); // 덮어쓰지 않음
+  });
+});
+
+describe("ClipboardHistoryStore", () => {
+  beforeEach(() => {
+    tmp = mkdtempSync(join(tmpdir(), "bokki-clip-"));
+    setUserDataRootForTest(tmp);
+  });
+
+  afterEach(() => {
+    setUserDataRootForTest(null);
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("빈 상태에서 list()는 []", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    expect(s.list()).toEqual([]);
+  });
+
+  it("addEntry → list 맨 앞", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    s.addEntry("a");
+    s.addEntry("b");
+    const list = s.list();
+    expect(list[0].text).toBe("b");
+    expect(list[1].text).toBe("a");
+  });
+
+  it("max 초과 → 오래된 것 drop", () => {
+    const s = new ClipboardHistoryStore(() => 3);
+    s.addEntry("a");
+    s.addEntry("b");
+    s.addEntry("c");
+    s.addEntry("d");
+    const list = s.list();
+    expect(list.length).toBe(3);
+    expect(list.map(e => e.text)).toEqual(["d", "c", "b"]);
+  });
+
+  it("moveToFront: 존재하면 true + 맨 앞 이동", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    s.addEntry("a");
+    s.addEntry("b");
+    const r = s.moveToFront("a");
+    expect(r).toBe(true);
+    expect(s.list()[0].text).toBe("a");
+  });
+
+  it("moveToFront: 없으면 false + 변화 없음", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    s.addEntry("a");
+    const r = s.moveToFront("missing");
+    expect(r).toBe(false);
+    expect(s.list().length).toBe(1);
+  });
+
+  it("deleteEntry 제거", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    const e = s.addEntry("a");
+    s.deleteEntry(e.id);
+    expect(s.list()).toEqual([]);
+  });
+
+  it("clear 전체 삭제", () => {
+    const s = new ClipboardHistoryStore(() => 50);
+    s.addEntry("a");
+    s.addEntry("b");
+    s.clear();
+    expect(s.list()).toEqual([]);
   });
 });
