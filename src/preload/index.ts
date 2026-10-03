@@ -20,7 +20,7 @@ const pet = {
   action: (kind: "click" | "dragStart" | "dragEnd") => ipcRenderer.send("pet:action", kind),
   dragMove: (delta: { dx: number; dy: number }) => ipcRenderer.send("pet:dragMove", delta),
   openBubble: (anchor: { x: number; y: number }) => ipcRenderer.send("bubble:open", anchor),
-  chooseAction: (a: "memo" | "launcher" | "pomo" | "sleep") => ipcRenderer.send("bubble:choose", a),
+  chooseAction: (a: "memo" | "launcher" | "sleep") => ipcRenderer.send("bubble:choose", a),
   dropFiles: (paths: string[]) => ipcRenderer.invoke("pet:dropFiles", paths) as Promise<number>
 };
 
@@ -64,11 +64,36 @@ const settings = {
   openCoffee: () => ipcRenderer.send("settings:openCoffee")
 };
 
+const palette = {
+  search: (query: string) =>
+    ipcRenderer.invoke("palette:search", query) as Promise<Array<{
+      kind: "memo" | "snippet" | "clipboard" | "launcher";
+      id: string;
+      text: string;
+      meta?: string;
+    }>>,
+  select: (item: { kind: string; id: string; editMode: boolean }) =>
+    ipcRenderer.invoke("palette:select", item) as Promise<void>,
+  createMemo: (text: string) =>
+    ipcRenderer.invoke("palette:createMemo", text) as Promise<void>,
+  openMemoWindow: () => ipcRenderer.invoke("palette:openMemoWindow") as Promise<void>,
+  close: () => ipcRenderer.send("palette:close"),
+  onReset: (cb: () => void) => ipcRenderer.on("palette:reset", () => cb())
+};
+
+const clipboard = {
+  togglePaused: () => ipcRenderer.invoke("clipboard:togglePaused") as Promise<boolean>,
+  isPaused: () => ipcRenderer.invoke("clipboard:isPaused") as Promise<boolean>,
+  clear: () => ipcRenderer.invoke("clipboard:clear") as Promise<void>
+};
+
 contextBridge.exposeInMainWorld("pet", pet);
 contextBridge.exposeInMainWorld("memos", memos);
 contextBridge.exposeInMainWorld("launchers", launchers);
 contextBridge.exposeInMainWorld("settings", settings);
 contextBridge.exposeInMainWorld("info", info);
+contextBridge.exposeInMainWorld("palette", palette);
+contextBridge.exposeInMainWorld("clipboard", clipboard);
 
 if (process.env.E2E_TEST) {
   contextBridge.exposeInMainWorld("__e2e", {
@@ -80,3 +105,5 @@ export type MemosApi = typeof memos;
 export type LaunchersApi = typeof launchers;
 export type SettingsApi = typeof settings;
 export type InfoApi = typeof info;
+export type PaletteApi = typeof palette;
+export type ClipboardApi = typeof clipboard;

@@ -1,4 +1,4 @@
-import type { PetApi, MemosApi, LaunchersApi, SettingsApi, InfoApi } from "./index";
+import type { PetApi, MemosApi, LaunchersApi, SettingsApi, InfoApi, PaletteApi, ClipboardApi } from "./index";
 declare global {
   interface Window {
     pet: PetApi;
@@ -6,6 +6,8 @@ declare global {
     launchers: LaunchersApi;
     settings: SettingsApi;
     info: InfoApi;
+    palette: PaletteApi;
+    clipboard: ClipboardApi;
   }
 }
 export {};

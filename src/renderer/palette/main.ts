@@ -24,7 +24,7 @@ const results = document.getElementById("results") as HTMLUListElement;
 let items: PaletteItem[] = [];
 let activeIdx = 0;
 
-const pal = (window as any).palette;
+const pal = window.palette;
 
 function render() {
   results.innerHTML = "";
