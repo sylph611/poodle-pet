@@ -464,7 +464,11 @@ async function bootstrap() {
     onCheckUpdate: () => checkForUpdates(true),
     onPomoStart: () => pomo.start(),
     onPomoStop: () => pomoStopManual(),
-    getPomoState: () => ({ phase: pomo.phase, remainingMs: pomo.remainingMs })
+    getPomoState: () => ({ phase: pomo.phase, remainingMs: pomo.remainingMs }),
+    getClipboardPaused: () => clipboardWatcher.isPaused(),
+    onToggleClipboardPaused: () => {
+      clipboardWatcher.setPaused(!clipboardWatcher.isPaused());
+    }
   }, characterDir);
 
   // 시작 5초 후 자동 체크 (조용히)

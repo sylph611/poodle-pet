@@ -13,6 +13,8 @@ export type TrayActions = {
   onPomoStop: () => void;
   // Tray 메뉴 rebuild 시 최신 포모도로 상태를 알기 위한 getter (circular import 회피)
   getPomoState: () => { phase: Phase; remainingMs: number };
+  getClipboardPaused: () => boolean;
+  onToggleClipboardPaused: () => void;
 };
 
 function loadTrayIcon(characterDir: string): NativeImage {
@@ -88,6 +90,12 @@ export function createTray(
           if (phase === "idle") actions.onPomoStart();
           else actions.onPomoStop();
         }
+      },
+      {
+        label: "📋 클립보드 캡처 일시정지",
+        type: "checkbox",
+        checked: actions.getClipboardPaused(),
+        click: () => actions.onToggleClipboardPaused()
       },
       { label: "설정", click: () => actions.onOpenSettings() },
       { label: "도움말", click: () => actions.onShowHelp() },
