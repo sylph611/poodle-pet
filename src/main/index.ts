@@ -337,6 +337,13 @@ async function bootstrap() {
 
   if (process.env.E2E_TEST) {
     ipcMain.handle("_e2e:pomoStart", () => { pomo.start(); });
+    ipcMain.handle("_e2e:openPalette", () => {
+      const win = ensurePaletteWindow();
+      positionPaletteAtCursor(win);
+      win.show();
+      win.focus();
+      win.webContents.send("palette:reset");
+    });
   }
 
   pomo.onPhaseChange((phase: Phase, remainingMs: number) => {

@@ -95,7 +95,8 @@ contextBridge.exposeInMainWorld("clipboard", clipboard);
 
 if (process.env.E2E_TEST) {
   contextBridge.exposeInMainWorld("__e2e", {
-    pomoStart: () => ipcRenderer.invoke("_e2e:pomoStart")
+    pomoStart: () => ipcRenderer.invoke("_e2e:pomoStart"),
+    openPalette: () => ipcRenderer.invoke("_e2e:openPalette")
   });
 }
 export type PetApi = typeof pet;

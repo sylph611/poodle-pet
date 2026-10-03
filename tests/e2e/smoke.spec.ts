@@ -128,6 +128,57 @@ test("memo window is lazy — created on open, destroyed on close", async () => 
   await closeApp(app);
 });
 
+test("palette: open → create memo → select → clipboard has text", async () => {
+  const app = await launch();
+  const pet = await getPetWindow(app);
+
+  // 메모 1개 미리 추가
+  await pet.evaluate(async () => {
+    await (window as any).memos.add("블로그 글감");
+  });
+  await waitMs(300);
+
+  // 팔레트 소환
+  await pet.evaluate(() => (window as any).__e2e.openPalette());
+  const palette = await findWindowBy(app, w => w.url().includes("palette"), 5000);
+  expect(palette).toBeTruthy();
+
+  // 검색 후 첫 결과 Enter
+  await palette!.fill("#q", "블로그");
+  await waitMs(200);
+  await palette!.press("#q", "Enter");
+  await waitMs(300);
+
+  // 클립보드에 복사됐는지 확인
+  const copied = await app.evaluate(({ clipboard }) => clipboard.readText());
+  expect(copied).toContain("블로그 글감");
+
+  await closeApp(app);
+});
+
+test("clipboard watcher: copy → 500ms wait → palette shows it", async () => {
+  const app = await launch();
+  const pet = await getPetWindow(app);
+
+  // 외부 복사 시뮬레이션 (main에서 clipboard.writeText)
+  await app.evaluate(({ clipboard }) => {
+    clipboard.writeText("e2e-clipboard-test");
+  });
+  await waitMs(800);  // 폴링 1회 보장
+
+  // 팔레트 열기
+  await pet.evaluate(() => (window as any).__e2e.openPalette());
+  const palette = await findWindowBy(app, w => w.url().includes("palette"), 5000);
+
+  // 검색 결과에 보여야 함
+  await palette!.fill("#q", "e2e-clipboard");
+  await waitMs(200);
+  const html = await palette!.innerHTML("#results");
+  expect(html).toContain("e2e-clipboard-test");
+
+  await closeApp(app);
+});
+
 test("pomodoro start → focus badge visible", async () => {
   const app = await launch();
   const pet = await getPetWindow(app);
