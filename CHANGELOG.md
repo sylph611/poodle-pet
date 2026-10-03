@@ -4,6 +4,28 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-10-04
+
+### Added
+- **커맨드 팔레트** — `Ctrl+Alt+M` 한 번에 메모·스니펫·클립보드·바로가기 통합 검색
+  - 결과 Enter: 메모·스니펫·클립보드는 **클립보드에 복사**, 바로가기는 실행
+  - Shift+Enter: 메모·스니펫 편집 창
+  - Ctrl+Enter: 입력 텍스트를 새 메모로 저장
+  - 빈 상태 Shift+Enter: 메모 창 바로 열기
+- **클립보드 히스토리** — 복사한 텍스트 자동 저장 (기본 50개, 20~200 설정)
+- **민감 패턴 자동 제외** — 카드번호·2FA·토큰·비밀번호 heuristic
+- **트레이 "📋 클립보드 캡처 일시정지"** 체크 메뉴
+- **스니펫 = 핀 메모** — 자주 쓰는 메모를 핀 꽂으면 팔레트에서 📎 아이콘으로 노출
+- **설정 창 📋 클립보드 섹션** — 캡처 토글 + 보관 수량 슬라이더
+
+### Changed
+- **단축키 `Ctrl+Alt+M`** 역할 변경: 빠른 메모 → 팔레트 소환
+  - 기존 멘탈 유지: 열자마자 Shift+Enter(빈 상태) 또는 Ctrl+Enter(입력 후)로 메모 작성 가능
+- **Bubble 메뉴에서 ⏱ 포모도로 버튼 제거** (유저 미사용 피드백 반영. 트레이·배지는 유지)
+
+### Fixed
+- (해당 없음)
+
 ## [0.4.1] — 2026-10-03
 
 ### Fixed
@@ -108,7 +130,8 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.5.0
 [0.4.1]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.1
 [0.4.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.0
 [0.3.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.3.0
