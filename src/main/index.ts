@@ -172,6 +172,19 @@ async function bootstrap() {
     return r.canceled ? null : r.filePaths[0];
   });
 
+  ipcMain.handle("launchers:updateAlias", (_, id: string, alias: string) => {
+    const arr = launchersStore.load();
+    const idx = arr.findIndex(x => x.id === id);
+    if (idx < 0) return;
+    const trimmed = alias.trim();
+    if (trimmed === "") {
+      delete arr[idx].alias;
+    } else {
+      arr[idx].alias = trimmed;
+    }
+    launchersStore.save(arr);
+  });
+
   ipcMain.handle("pet:dropFiles", (_, paths: string[]) => {
     const now = launchersStore.load();
     let order = now.length ? Math.max(...now.map(x => x.order)) + 1 : 0;
@@ -744,13 +757,13 @@ async function bootstrap() {
     const pinnedMemos = memos.filter(m => m.pinned && matchText(m.text)).slice(0, 10);
     const normalMemos = memos.filter(m => !m.pinned && matchText(m.text)).slice(0, 10);
     const matchedClips = clips.filter(c => matchText(c.text)).slice(0, 10);
-    const matchedLaunchers = launchers.filter(l => matchText(l.name) || matchText(l.target)).slice(0, 10);
+    const matchedLaunchers = launchers.filter(l => matchText(l.name) || matchText(l.target) || (l.alias && matchText(l.alias))).slice(0, 10);
 
     const items: Array<{ kind: "memo" | "snippet" | "clipboard" | "launcher"; id: string; text: string; meta?: string }> = [];
     for (const m of pinnedMemos)      items.push({ kind: "snippet",   id: m.id, text: m.text.slice(0, 120) });
     for (const c of matchedClips)     items.push({ kind: "clipboard", id: c.id, text: c.text.slice(0, 120), meta: timeago(c.copiedAt) });
     for (const m of normalMemos)      items.push({ kind: "memo",      id: m.id, text: m.text.slice(0, 120) });
-    for (const l of matchedLaunchers) items.push({ kind: "launcher",  id: l.id, text: l.name });
+    for (const l of matchedLaunchers) items.push({ kind: "launcher",  id: l.id, text: l.alias ?? l.name, meta: l.alias ? l.name : undefined });
 
     return items.slice(0, 40);
   });
@@ -782,6 +795,12 @@ async function bootstrap() {
         const w = ensureMemoWindow();
         w.show();
         w.focus();
+        const sendFocus = () => w.webContents.send("memo:focus", m.id);
+        if (w.webContents.isLoading()) {
+          w.webContents.once("did-finish-load", sendFocus);
+        } else {
+          sendFocus();
+        }
         return;
       }
     } else if (item.kind === "clipboard") {

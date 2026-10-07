@@ -26,14 +26,31 @@ async function refresh() {
     li.innerHTML = `
       <span class="drag-handle">⋮⋮</span>
       ${iconHtml}
-      <span class="name" title=""></span>
+      <div class="name-wrap">
+        <span class="name" title=""></span>
+        <span class="subname${l.alias ? "" : " hidden"}"></span>
+      </div>
       <div class="actions">
+        <button data-a="rename" title="별칭 수정">✏️</button>
         <button data-a="open" title="열기">▶</button>
         <button data-a="del" title="삭제">🗑</button>
       </div>`;
     const nameEl = li.querySelector(".name") as HTMLElement;
-    nameEl.textContent = l.name;
+    const subnameEl = li.querySelector(".subname") as HTMLElement;
+    nameEl.textContent = l.alias ?? l.name;
     nameEl.title = l.target;
+    subnameEl.textContent = l.name;
+    li.querySelector('[data-a="rename"]')!.addEventListener("click", async () => {
+      const newAlias = await showModal({
+        title: "별칭 수정",
+        initial: l.alias ?? "",
+        placeholder: "비우면 원래 이름 사용"
+      });
+      if (newAlias !== null) {
+        await window.launchers.updateAlias(l.id, newAlias);
+        refresh();
+      }
+    });
     li.querySelector('[data-a="open"]')!.addEventListener("click", async () => {
       const r = await window.launchers.open(l.id);
       if (!r.ok) nameEl.classList.add("warn");
@@ -97,7 +114,7 @@ function showModal(opts: { title: string; initial?: string; placeholder?: string
       input.removeEventListener("keydown", onKey);
       resolve(val);
     };
-    const onOk = () => finish(input.value.trim() || null);
+    const onOk = () => finish(input.value.trim());
     const onCancel = () => finish(null);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Enter") { e.preventDefault(); onOk(); }

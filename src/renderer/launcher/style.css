@@ -133,8 +133,14 @@ html, body {
   flex-shrink: 0;
 }
 
-#list .name {
+#list .name-wrap {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-width: 0;
+}
+
+#list .name {
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -145,6 +151,15 @@ html, body {
   text-decoration: line-through;
   opacity: 0.7;
 }
+
+#list .subname {
+  font-size: 11px;
+  color: #8B6F52;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#list .subname.hidden { display: none; }
 
 .actions {
   display: flex;

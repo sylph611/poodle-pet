@@ -259,3 +259,12 @@ html, body {
   padding: 24px 12px;
   font-size: 12px;
 }
+
+.highlight-flash {
+  animation: flashHighlight 1.5s ease-out;
+}
+
+@keyframes flashHighlight {
+  0% { background: #FFF3C4; }
+  100% { background: transparent; }
+}

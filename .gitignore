@@ -6,5 +6,6 @@ playwright-report/
 .superpowers/
 docs/blog/drafts/
 *.log
+*test-output*
 .DS_Store
 Thumbs.db

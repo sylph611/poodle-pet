@@ -9,6 +9,7 @@ export type Memo = {
 export type Launcher = {
   id: string;
   name: string;
+  alias?: string;
   type: "file" | "folder" | "url";
   target: string;
   order: number;

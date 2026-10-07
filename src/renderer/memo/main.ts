@@ -46,6 +46,7 @@ async function refresh() {
   }
   for (const m of items) {
     const li = document.createElement("li");
+    li.dataset.id = m.id;
     if (m.pinned) li.classList.add("pinned");
     li.innerHTML = `
       <span class="text"></span>
@@ -86,4 +87,13 @@ input.addEventListener("keydown", async (e) => {
 });
 search.addEventListener("input", refresh);
 refresh();
+
+window.memos.onFocus((id: string) => {
+  const el = list.querySelector(`[data-id="${id}"]`) as HTMLElement | null;
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.add("highlight-flash");
+  setTimeout(() => el.classList.remove("highlight-flash"), 1500);
+});
+
 export {};

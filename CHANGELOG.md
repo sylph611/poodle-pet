@@ -4,6 +4,17 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-10-07
+
+### Added
+- **바로가기 별칭** — 바로가기 창에서 ✏️ 버튼으로 별칭 설정. 팔레트 검색에서 별칭·원래 이름·경로 모두 매칭. 리스트/팔레트는 별칭 우선 표시 + 원래 이름 작게.
+
+### Changed
+- **팔레트 ✏️ 편집** — 메모 창이 뜰 때 해당 메모를 자동 스크롤 + 하이라이트. 기존엔 창만 뜨고 메모가 안 보이던 문제 해결.
+
+### Chore
+- `test-output.txt` 등 vitest 임시 출력 파일 `.gitignore` 반영
+
 ## [0.5.0] — 2026-10-04
 
 ### Added
@@ -134,7 +145,8 @@ All notable changes to 뽁이 (BOKKI) will be documented in this file. Format ba
 - **트레이 아이콘 뭉개짐**: 현재 sprite.png 전체 축소 → 개선 예정
 - **캐릭터 스프라이트 빨간 테두리**: AI 생성 특성. 재생성 예정
 
-[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/sylph611/poodle-pet/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/sylph611/poodle-pet/releases/tag/v0.5.1
 [0.5.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.5.0
 [0.4.1]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.1
 [0.4.0]: https://github.com/sylph611/poodle-pet/releases/tag/v0.4.0

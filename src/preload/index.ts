@@ -27,7 +27,8 @@ const memos = {
   add: (text: string) => ipcRenderer.invoke("memos:add", { text }) as Promise<Memo>,
   update: (id: string, patch: { text?: string; pinned?: boolean }) => ipcRenderer.invoke("memos:update", id, patch) as Promise<Memo>,
   remove: (id: string) => ipcRenderer.invoke("memos:remove", id) as Promise<void>,
-  search: (q: string) => ipcRenderer.invoke("memos:search", q) as Promise<Memo[]>
+  search: (q: string) => ipcRenderer.invoke("memos:search", q) as Promise<Memo[]>,
+  onFocus: (cb: (id: string) => void) => ipcRenderer.on("memo:focus", (_, id) => cb(id))
 };
 
 const launchers = {
@@ -38,7 +39,8 @@ const launchers = {
   reorder: (ids: string[]) => ipcRenderer.invoke("launchers:reorder", ids) as Promise<void>,
   open: (id: string) => ipcRenderer.invoke("launchers:open", id) as Promise<{ ok: boolean; error?: string }>,
   iconFor: (id: string) => ipcRenderer.invoke("launchers:iconFor", id) as Promise<string | null>,
-  pickFile: () => ipcRenderer.invoke("launchers:pickFile") as Promise<string | null>
+  pickFile: () => ipcRenderer.invoke("launchers:pickFile") as Promise<string | null>,
+  updateAlias: (id: string, alias: string) => ipcRenderer.invoke("launchers:updateAlias", id, alias) as Promise<void>
 };
 
 const info = {
